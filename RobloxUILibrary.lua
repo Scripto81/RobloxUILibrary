@@ -1,18 +1,19 @@
-local RobloxUILibrary = {}
-RobloxUILibrary.__index = RobloxUILibrary
+local AdvancedRobloxUILibrary = {}
+AdvancedRobloxUILibrary.__index = AdvancedRobloxUILibrary
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 local function createScreenGui()
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "RobloxUILibrary"
+    screenGui.Name = "AdvancedRobloxUILibrary"
     screenGui.Parent = CoreGui
     return screenGui
 end
@@ -107,6 +108,15 @@ local function createUISizeConstraint(parent, properties)
     return uiSizeConstraint
 end
 
+local function createUIAspectRatioConstraint(parent, properties)
+    local uiAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
+    for key, value in pairs(properties) do
+        uiAspectRatioConstraint[key] = value
+    end
+    uiAspectRatioConstraint.Parent = parent
+    return uiAspectRatioConstraint
+end
+
 local function tween(instance, properties, duration, easingStyle, easingDirection)
     local tweenInfo = TweenInfo.new(duration or 0.3, easingStyle or Enum.EasingStyle.Quad, easingDirection or Enum.EasingDirection.Out)
     local tween = TweenService:Create(instance, tweenInfo, properties)
@@ -114,112 +124,305 @@ local function tween(instance, properties, duration, easingStyle, easingDirectio
     return tween
 end
 
-function RobloxUILibrary.new()
-    local self = setmetatable({}, RobloxUILibrary)
+local function createShadow(parent)
+    local shadow = createFrame(parent, {
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        ZIndex = -1
+    })
+    
+    createUICorner(shadow, {CornerRadius = UDim.new(0, 8)})
+    createUIStroke(shadow, {Color = Color3.fromRGB(0, 0, 0), Thickness = 0, Transparency = 0.5})
+    
+    return shadow
+end
+
+function AdvancedRobloxUILibrary.new()
+    local self = setmetatable({}, AdvancedRobloxUILibrary)
     self.screenGui = createScreenGui()
     self.components = {}
+    self.windows = {}
+    self.theme = {
+        primary = Color3.fromRGB(45, 45, 55),
+        secondary = Color3.fromRGB(35, 35, 45),
+        accent = Color3.fromRGB(100, 150, 255),
+        text = Color3.fromRGB(255, 255, 255),
+        textSecondary = Color3.fromRGB(200, 200, 200),
+        border = Color3.fromRGB(60, 60, 70),
+        success = Color3.fromRGB(100, 200, 100),
+        warning = Color3.fromRGB(255, 200, 100),
+        error = Color3.fromRGB(255, 100, 100)
+    }
     return self
 end
 
-function RobloxUILibrary:createWindow(title, size, position)
+function AdvancedRobloxUILibrary:createWindow(title, size, position)
     local window = createFrame(self.screenGui, {
-        Size = size or UDim2.new(0, 300, 0, 400),
-        Position = position or UDim2.new(0.5, -150, 0.5, -200),
-        BackgroundColor3 = Color3.fromRGB(30, 30, 35),
+        Size = size or UDim2.new(0, 400, 0, 500),
+        Position = position or UDim2.new(0.5, -200, 0.5, -250),
+        BackgroundColor3 = self.theme.primary,
         BorderSizePixel = 0,
         Active = true,
         Draggable = true
     })
     
-    createUICorner(window, {CornerRadius = UDim.new(0, 8)})
-    createUIStroke(window, {Color = Color3.fromRGB(60, 60, 65), Thickness = 1})
+    createUICorner(window, {CornerRadius = UDim.new(0, 12)})
+    createUIStroke(window, {Color = self.theme.border, Thickness = 1})
+    createShadow(window)
     
     local titleBar = createFrame(window, {
-        Size = UDim2.new(1, 0, 0, 30),
+        Size = UDim2.new(1, 0, 0, 40),
         Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 45),
+        BackgroundColor3 = self.theme.secondary,
         BorderSizePixel = 0
     })
     
-    createUICorner(titleBar, {CornerRadius = UDim.new(0, 8)})
+    createUICorner(titleBar, {CornerRadius = UDim.new(0, 12)})
     
     local titleLabel = createTextLabel(titleBar, {
-        Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
+        Size = UDim2.new(1, -60, 1, 0),
+        Position = UDim2.new(0, 15, 0, 0),
         BackgroundTransparency = 1,
         Text = title or "Window",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = self.theme.text,
         TextScaled = true,
-        Font = Enum.Font.GothamBold
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left
     })
     
     local closeButton = createImageButton(titleBar, {
-        Size = UDim2.new(0, 20, 0, 20),
-        Position = UDim2.new(1, -25, 0.5, -10),
-        BackgroundColor3 = Color3.fromRGB(200, 50, 50),
+        Size = UDim2.new(0, 25, 0, 25),
+        Position = UDim2.new(1, -30, 0.5, -12.5),
+        BackgroundColor3 = self.theme.error,
         BorderSizePixel = 0,
         Image = ""
     })
     
-    createUICorner(closeButton, {CornerRadius = UDim.new(0, 4)})
+    createUICorner(closeButton, {CornerRadius = UDim.new(0, 6)})
+    
+    local minimizeButton = createImageButton(titleBar, {
+        Size = UDim2.new(0, 25, 0, 25),
+        Position = UDim2.new(1, -60, 0.5, -12.5),
+        BackgroundColor3 = self.theme.warning,
+        BorderSizePixel = 0,
+        Image = ""
+    })
+    
+    createUICorner(minimizeButton, {CornerRadius = UDim.new(0, 6)})
     
     local contentFrame = createFrame(window, {
-        Size = UDim2.new(1, 0, 1, -30),
-        Position = UDim2.new(0, 0, 0, 30),
+        Size = UDim2.new(1, 0, 1, -40),
+        Position = UDim2.new(0, 0, 0, 40),
         BackgroundTransparency = 1
     })
     
     createUIPadding(contentFrame, {
-        PaddingLeft = UDim.new(0, 10),
-        PaddingRight = UDim.new(0, 10),
-        PaddingTop = UDim.new(0, 10),
-        PaddingBottom = UDim.new(0, 10)
+        PaddingLeft = UDim.new(0, 15),
+        PaddingRight = UDim.new(0, 15),
+        PaddingTop = UDim.new(0, 15),
+        PaddingBottom = UDim.new(0, 15)
     })
+    
+    local isMinimized = false
     
     closeButton.MouseButton1Click:Connect(function()
         window:Destroy()
+    end)
+    
+    minimizeButton.MouseButton1Click:Connect(function()
+        isMinimized = not isMinimized
+        if isMinimized then
+            tween(window, {Size = UDim2.new(0, 400, 0, 40)})
+            contentFrame.Visible = false
+        else
+            tween(window, {Size = size or UDim2.new(0, 400, 0, 500)})
+            contentFrame.Visible = true
+        end
     end)
     
     local windowObj = {
         window = window,
         titleBar = titleBar,
         contentFrame = contentFrame,
-        closeButton = closeButton
+        closeButton = closeButton,
+        minimizeButton = minimizeButton,
+        isMinimized = isMinimized
     }
     
     table.insert(self.components, windowObj)
+    table.insert(self.windows, windowObj)
     return windowObj
 end
 
-function RobloxUILibrary:createButton(parent, text, size, callback)
-    local button = createFrame(parent, {
-        Size = size or UDim2.new(1, 0, 0, 35),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 55),
+function AdvancedRobloxUILibrary:createTabSystem(parent, tabs)
+    local tabSystem = createFrame(parent, {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1
+    })
+    
+    local tabButtons = createFrame(tabSystem, {
+        Size = UDim2.new(1, 0, 0, 35),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = self.theme.secondary,
         BorderSizePixel = 0
     })
     
-    createUICorner(button, {CornerRadius = UDim.new(0, 6)})
-    createUIStroke(button, {Color = Color3.fromRGB(70, 70, 75), Thickness = 1})
+    createUICorner(tabButtons, {CornerRadius = UDim.new(0, 8)})
+    
+    local tabContent = createFrame(tabSystem, {
+        Size = UDim2.new(1, 0, 1, -45),
+        Position = UDim2.new(0, 0, 0, 45),
+        BackgroundTransparency = 1
+    })
+    
+    local tabPages = {}
+    local activeTab = nil
+    
+    for i, tabName in pairs(tabs) do
+        local tabButton = createFrame(tabButtons, {
+            Size = UDim2.new(1/#tabs, -5, 1, -5),
+            Position = UDim2.new((i-1)/#tabs, 0, 0, 0),
+            BackgroundColor3 = self.theme.primary,
+            BorderSizePixel = 0
+        })
+        
+        createUICorner(tabButton, {CornerRadius = UDim.new(0, 6)})
+        
+        local tabText = createTextLabel(tabButton, {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Text = tabName,
+            TextColor3 = self.theme.textSecondary,
+            TextScaled = true,
+            Font = Enum.Font.Gotham,
+            TextXAlignment = Enum.TextXAlignment.Center
+        })
+        
+        local tabPage = createFrame(tabContent, {
+            Size = UDim2.new(1, 0, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1,
+            Visible = i == 1
+        })
+        
+        tabPages[tabName] = {
+            button = tabButton,
+            page = tabPage,
+            text = tabText
+        }
+        
+        if i == 1 then
+            activeTab = tabName
+            tween(tabButton, {BackgroundColor3 = self.theme.accent})
+            tween(tabText, {TextColor3 = self.theme.text})
+        end
+        
+        tabButton.MouseButton1Click:Connect(function()
+            if activeTab ~= tabName then
+                -- Hide current tab
+                tabPages[activeTab].page.Visible = false
+                tween(tabPages[activeTab].button, {BackgroundColor3 = self.theme.primary})
+                tween(tabPages[activeTab].text, {TextColor3 = self.theme.textSecondary})
+                
+                -- Show new tab
+                tabPages[tabName].page.Visible = true
+                tween(tabPages[tabName].button, {BackgroundColor3 = self.theme.accent})
+                tween(tabPages[tabName].text, {TextColor3 = self.theme.text})
+                
+                activeTab = tabName
+            end
+        end)
+    end
+    
+    return {
+        frame = tabSystem,
+        pages = tabPages,
+        activeTab = activeTab
+    }
+end
+
+function AdvancedRobloxUILibrary:createSection(parent, title, size)
+    local section = createFrame(parent, {
+        Size = size or UDim2.new(1, 0, 0, 0),
+        BackgroundColor3 = self.theme.secondary,
+        BorderSizePixel = 0
+    })
+    
+    createUICorner(section, {CornerRadius = UDim.new(0, 8)})
+    createUIStroke(section, {Color = self.theme.border, Thickness = 1})
+    
+    local sectionTitle = createTextLabel(section, {
+        Size = UDim2.new(1, -20, 0, 25),
+        Position = UDim2.new(0, 10, 0, 5),
+        BackgroundTransparency = 1,
+        Text = title or "Section",
+        TextColor3 = self.theme.text,
+        TextScaled = true,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local sectionContent = createFrame(section, {
+        Size = UDim2.new(1, -20, 1, -35),
+        Position = UDim2.new(0, 10, 0, 30),
+        BackgroundTransparency = 1
+    })
+    
+    createUIPadding(sectionContent, {
+        PaddingTop = UDim.new(0, 5),
+        PaddingBottom = UDim.new(0, 5)
+    })
+    
+    return {
+        frame = section,
+        content = sectionContent,
+        title = sectionTitle
+    }
+end
+
+function AdvancedRobloxUILibrary:createButton(parent, text, size, callback, style)
+    style = style or "primary"
+    
+    local buttonColors = {
+        primary = {bg = self.theme.accent, hover = Color3.fromRGB(120, 170, 255)},
+        secondary = {bg = self.theme.secondary, hover = Color3.fromRGB(45, 45, 55)},
+        success = {bg = self.theme.success, hover = Color3.fromRGB(120, 220, 120)},
+        warning = {bg = self.theme.warning, hover = Color3.fromRGB(255, 220, 120)},
+        error = {bg = self.theme.error, hover = Color3.fromRGB(255, 120, 120)}
+    }
+    
+    local button = createFrame(parent, {
+        Size = size or UDim2.new(1, 0, 0, 35),
+        BackgroundColor3 = buttonColors[style].bg,
+        BorderSizePixel = 0
+    })
+    
+    createUICorner(button, {CornerRadius = UDim.new(0, 8)})
+    createUIStroke(button, {Color = self.theme.border, Thickness = 1})
     
     local buttonText = createTextLabel(button, {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
         Text = text or "Button",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = self.theme.text,
         TextScaled = true,
-        Font = Enum.Font.Gotham
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Center
     })
     
     local isHovered = false
     
     button.MouseEnter:Connect(function()
         isHovered = true
-        tween(button, {BackgroundColor3 = Color3.fromRGB(60, 60, 65)})
+        tween(button, {BackgroundColor3 = buttonColors[style].hover})
+        tween(button, {Size = size and (size + UDim2.new(0, 2, 0, 2)) or UDim2.new(1, 2, 0, 37)})
     end)
     
     button.MouseLeave:Connect(function()
         isHovered = false
-        tween(button, {BackgroundColor3 = Color3.fromRGB(50, 50, 55)})
+        tween(button, {BackgroundColor3 = buttonColors[style].bg})
+        tween(button, {Size = size or UDim2.new(1, 0, 0, 35)})
     end)
     
     button.MouseButton1Click:Connect(function()
@@ -231,157 +434,91 @@ function RobloxUILibrary:createButton(parent, text, size, callback)
     return button
 end
 
-function RobloxUILibrary:createTextBox(parent, placeholder, size)
+function AdvancedRobloxUILibrary:createTextBox(parent, placeholder, size, callback)
     local textBox = createTextBox(parent, {
-        Size = size or UDim2.new(1, 0, 0, 30),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 45),
+        Size = size or UDim2.new(1, 0, 0, 35),
+        BackgroundColor3 = self.theme.primary,
         BorderSizePixel = 0,
         Text = "",
         PlaceholderText = placeholder or "Enter text...",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
+        TextColor3 = self.theme.text,
+        PlaceholderColor3 = self.theme.textSecondary,
         TextScaled = true,
         Font = Enum.Font.Gotham,
         ClearTextOnFocus = false
     })
     
-    createUICorner(textBox, {CornerRadius = UDim.new(0, 6)})
-    createUIStroke(textBox, {Color = Color3.fromRGB(70, 70, 75), Thickness = 1})
+    createUICorner(textBox, {CornerRadius = UDim.new(0, 8)})
+    createUIStroke(textBox, {Color = self.theme.border, Thickness = 1})
     
     textBox.Focused:Connect(function()
-        tween(textBox.UIStroke, {Color = Color3.fromRGB(100, 150, 255)})
+        tween(textBox.UIStroke, {Color = self.theme.accent, Thickness = 2})
     end)
     
     textBox.FocusLost:Connect(function()
-        tween(textBox.UIStroke, {Color = Color3.fromRGB(70, 70, 75)})
+        tween(textBox.UIStroke, {Color = self.theme.border, Thickness = 1})
+        if callback then
+            callback(textBox.Text)
+        end
     end)
     
     return textBox
 end
 
-function RobloxUILibrary:createList(parent, items, size)
-    local listFrame = createFrame(parent, {
-        Size = size or UDim2.new(1, 0, 0, 200),
-        BackgroundColor3 = Color3.fromRGB(35, 35, 40),
-        BorderSizePixel = 0
+function AdvancedRobloxUILibrary:createSlider(parent, min, max, default, callback, label)
+    local sliderFrame = createFrame(parent, {
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundTransparency = 1
     })
     
-    createUICorner(listFrame, {CornerRadius = UDim.new(0, 6)})
-    createUIStroke(listFrame, {Color = Color3.fromRGB(70, 70, 75), Thickness = 1})
-    
-    local scrollingFrame = createScrollingFrame(listFrame, {
-        Size = UDim2.new(1, -10, 1, -10),
-        Position = UDim2.new(0, 5, 0, 5),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ScrollBarThickness = 6,
-        CanvasSize = UDim2.new(0, 0, 0, 0)
-    })
-    
-    local listItems = {}
-    local itemHeight = 30
-    local spacing = 2
-    
-    local function updateCanvasSize()
-        local totalHeight = #listItems * (itemHeight + spacing) - spacing
-        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
-    end
-    
-    local function addItem(text, callback)
-        local itemFrame = createFrame(scrollingFrame, {
-            Size = UDim2.new(1, 0, 0, itemHeight),
-            Position = UDim2.new(0, 0, 0, #listItems * (itemHeight + spacing)),
-            BackgroundColor3 = Color3.fromRGB(45, 45, 50),
-            BorderSizePixel = 0
-        })
-        
-        createUICorner(itemFrame, {CornerRadius = UDim.new(0, 4)})
-        
-        local itemText = createTextLabel(itemFrame, {
-            Size = UDim2.new(1, -10, 1, 0),
-            Position = UDim2.new(0, 5, 0, 0),
+    if label then
+        local labelText = createTextLabel(sliderFrame, {
+            Size = UDim2.new(1, 0, 0, 20),
+            Position = UDim2.new(0, 0, 0, 0),
             BackgroundTransparency = 1,
-            Text = text,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
+            Text = label,
+            TextColor3 = self.theme.text,
             TextScaled = true,
             Font = Enum.Font.Gotham,
             TextXAlignment = Enum.TextXAlignment.Left
         })
-        
-        itemFrame.MouseEnter:Connect(function()
-            tween(itemFrame, {BackgroundColor3 = Color3.fromRGB(55, 55, 60)})
-        end)
-        
-        itemFrame.MouseLeave:Connect(function()
-            tween(itemFrame, {BackgroundColor3 = Color3.fromRGB(45, 45, 50)})
-        end)
-        
-        itemFrame.MouseButton1Click:Connect(function()
-            if callback then
-                callback(text)
-            end
-        end)
-        
-        table.insert(listItems, itemFrame)
-        updateCanvasSize()
-        
-        return itemFrame
     end
-    
-    if items then
-        for _, item in pairs(items) do
-            addItem(item)
-        end
-    end
-    
-    return {
-        frame = listFrame,
-        scrollingFrame = scrollingFrame,
-        addItem = addItem,
-        items = listItems
-    }
-end
-
-function RobloxUILibrary:createSlider(parent, min, max, default, callback)
-    local sliderFrame = createFrame(parent, {
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundTransparency = 1
-    })
     
     local sliderTrack = createFrame(sliderFrame, {
-        Size = UDim2.new(1, 0, 0, 4),
-        Position = UDim2.new(0, 0, 0.5, -2),
-        BackgroundColor3 = Color3.fromRGB(60, 60, 65),
+        Size = UDim2.new(1, 0, 0, 6),
+        Position = UDim2.new(0, 0, 0, label and 25 or 0),
+        BackgroundColor3 = self.theme.primary,
         BorderSizePixel = 0
     })
     
-    createUICorner(sliderTrack, {CornerRadius = UDim.new(0, 2)})
+    createUICorner(sliderTrack, {CornerRadius = UDim.new(0, 3)})
+    createUIStroke(sliderTrack, {Color = self.theme.border, Thickness = 1})
     
     local sliderFill = createFrame(sliderTrack, {
         Size = UDim2.new(0, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = Color3.fromRGB(100, 150, 255),
+        BackgroundColor3 = self.theme.accent,
         BorderSizePixel = 0
     })
     
-    createUICorner(sliderFill, {CornerRadius = UDim.new(0, 2)})
+    createUICorner(sliderFill, {CornerRadius = UDim.new(0, 3)})
     
     local sliderButton = createFrame(sliderFrame, {
-        Size = UDim2.new(0, 16, 0, 16),
-        Position = UDim2.new(0, 0, 0.5, -8),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        Size = UDim2.new(0, 18, 0, 18),
+        Position = UDim2.new(0, 0, 0, label and 25 or 0),
+        BackgroundColor3 = self.theme.text,
         BorderSizePixel = 0
     })
     
-    createUICorner(sliderButton, {CornerRadius = UDim.new(0, 8)})
-    createUIStroke(sliderButton, {Color = Color3.fromRGB(100, 150, 255), Thickness = 2})
+    createUICorner(sliderButton, {CornerRadius = UDim.new(0, 9)})
+    createUIStroke(sliderButton, {Color = self.theme.accent, Thickness = 2})
     
     local valueLabel = createTextLabel(sliderFrame, {
-        Size = UDim2.new(0, 50, 0, 20),
-        Position = UDim2.new(1, -55, 0, 0),
+        Size = UDim2.new(0, 60, 0, 20),
+        Position = UDim2.new(1, -65, 0, label and 25 or 0),
         BackgroundTransparency = 1,
         Text = tostring(default or min),
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = self.theme.text,
         TextScaled = true,
         Font = Enum.Font.Gotham,
         TextXAlignment = Enum.TextXAlignment.Right
@@ -394,7 +531,7 @@ function RobloxUILibrary:createSlider(parent, min, max, default, callback)
         currentValue = math.clamp(value, min, max)
         local percentage = (currentValue - min) / (max - min)
         sliderFill.Size = UDim2.new(percentage, 0, 1, 0)
-        sliderButton.Position = UDim2.new(percentage, -8, 0.5, -8)
+        sliderButton.Position = UDim2.new(percentage, -9, 0, label and 25 or 0)
         valueLabel.Text = tostring(math.floor(currentValue))
         
         if callback then
@@ -433,36 +570,37 @@ function RobloxUILibrary:createSlider(parent, min, max, default, callback)
     }
 end
 
-function RobloxUILibrary:createToggle(parent, text, default, callback)
+function AdvancedRobloxUILibrary:createToggle(parent, text, default, callback)
     local toggleFrame = createFrame(parent, {
-        Size = UDim2.new(1, 0, 0, 25),
+        Size = UDim2.new(1, 0, 0, 30),
         BackgroundTransparency = 1
     })
     
     local toggleButton = createFrame(toggleFrame, {
-        Size = UDim2.new(0, 40, 0, 20),
-        Position = UDim2.new(1, -45, 0, 0),
-        BackgroundColor3 = Color3.fromRGB(60, 60, 65),
+        Size = UDim2.new(0, 45, 0, 25),
+        Position = UDim2.new(1, -50, 0.5, -12.5),
+        BackgroundColor3 = self.theme.primary,
         BorderSizePixel = 0
     })
     
-    createUICorner(toggleButton, {CornerRadius = UDim.new(0, 10)})
+    createUICorner(toggleButton, {CornerRadius = UDim.new(0, 12.5)})
+    createUIStroke(toggleButton, {Color = self.theme.border, Thickness = 1})
     
     local toggleCircle = createFrame(toggleButton, {
-        Size = UDim2.new(0, 16, 0, 16),
-        Position = UDim2.new(0, 2, 0.5, -8),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        Size = UDim2.new(0, 19, 0, 19),
+        Position = UDim2.new(0, 3, 0.5, -9.5),
+        BackgroundColor3 = self.theme.text,
         BorderSizePixel = 0
     })
     
-    createUICorner(toggleCircle, {CornerRadius = UDim.new(0, 8)})
+    createUICorner(toggleCircle, {CornerRadius = UDim.new(0, 9.5)})
     
     local toggleText = createTextLabel(toggleFrame, {
-        Size = UDim2.new(1, -50, 1, 0),
+        Size = UDim2.new(1, -60, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1,
         Text = text or "Toggle",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = self.theme.text,
         TextScaled = true,
         Font = Enum.Font.Gotham,
         TextXAlignment = Enum.TextXAlignment.Left
@@ -472,11 +610,11 @@ function RobloxUILibrary:createToggle(parent, text, default, callback)
     
     local function updateToggle()
         if isToggled then
-            tween(toggleButton, {BackgroundColor3 = Color3.fromRGB(100, 150, 255)})
-            tween(toggleCircle, {Position = UDim2.new(1, -18, 0.5, -8)})
+            tween(toggleButton, {BackgroundColor3 = self.theme.accent})
+            tween(toggleCircle, {Position = UDim2.new(1, -22, 0.5, -9.5)})
         else
-            tween(toggleButton, {BackgroundColor3 = Color3.fromRGB(60, 60, 65)})
-            tween(toggleCircle, {Position = UDim2.new(0, 2, 0.5, -8)})
+            tween(toggleButton, {BackgroundColor3 = self.theme.primary})
+            tween(toggleCircle, {Position = UDim2.new(0, 3, 0.5, -9.5)})
         end
     end
     
@@ -500,33 +638,33 @@ function RobloxUILibrary:createToggle(parent, text, default, callback)
     }
 end
 
-function RobloxUILibrary:createDropdown(parent, options, default, callback)
+function AdvancedRobloxUILibrary:createDropdown(parent, options, default, callback)
     local dropdownFrame = createFrame(parent, {
-        Size = UDim2.new(1, 0, 0, 30),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 45),
+        Size = UDim2.new(1, 0, 0, 35),
+        BackgroundColor3 = self.theme.primary,
         BorderSizePixel = 0
     })
     
-    createUICorner(dropdownFrame, {CornerRadius = UDim.new(0, 6)})
-    createUIStroke(dropdownFrame, {Color = Color3.fromRGB(70, 70, 75), Thickness = 1})
+    createUICorner(dropdownFrame, {CornerRadius = UDim.new(0, 8)})
+    createUIStroke(dropdownFrame, {Color = self.theme.border, Thickness = 1})
     
     local dropdownText = createTextLabel(dropdownFrame, {
-        Size = UDim2.new(1, -30, 1, 0),
+        Size = UDim2.new(1, -35, 1, 0),
         Position = UDim2.new(0, 10, 0, 0),
         BackgroundTransparency = 1,
         Text = default or options[1] or "Select option",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = self.theme.text,
         TextScaled = true,
         Font = Enum.Font.Gotham,
         TextXAlignment = Enum.TextXAlignment.Left
     })
     
     local dropdownArrow = createTextLabel(dropdownFrame, {
-        Size = UDim2.new(0, 20, 1, 0),
-        Position = UDim2.new(1, -25, 0, 0),
+        Size = UDim2.new(0, 25, 1, 0),
+        Position = UDim2.new(1, -30, 0, 0),
         BackgroundTransparency = 1,
         Text = "▼",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = self.theme.text,
         TextScaled = true,
         Font = Enum.Font.Gotham
     })
@@ -534,13 +672,13 @@ function RobloxUILibrary:createDropdown(parent, options, default, callback)
     local dropdownList = createFrame(dropdownFrame, {
         Size = UDim2.new(1, 0, 0, 0),
         Position = UDim2.new(0, 0, 1, 5),
-        BackgroundColor3 = Color3.fromRGB(35, 35, 40),
+        BackgroundColor3 = self.theme.secondary,
         BorderSizePixel = 0,
         Visible = false
     })
     
-    createUICorner(dropdownList, {CornerRadius = UDim.new(0, 6)})
-    createUIStroke(dropdownList, {Color = Color3.fromRGB(70, 70, 75), Thickness = 1})
+    createUICorner(dropdownList, {CornerRadius = UDim.new(0, 8)})
+    createUIStroke(dropdownList, {Color = self.theme.border, Thickness = 1})
     
     local isOpen = false
     local selectedOption = default or options[1]
@@ -556,7 +694,7 @@ function RobloxUILibrary:createDropdown(parent, options, default, callback)
         isOpen = not isOpen
         if isOpen then
             dropdownList.Visible = true
-            dropdownList.Size = UDim2.new(1, 0, 0, #options * 25 + 10)
+            dropdownList.Size = UDim2.new(1, 0, 0, #options * 30 + 10)
             tween(dropdownArrow, {Rotation = 180})
         else
             dropdownList.Size = UDim2.new(1, 0, 0, 0)
@@ -568,31 +706,31 @@ function RobloxUILibrary:createDropdown(parent, options, default, callback)
     
     for i, option in pairs(options) do
         local optionButton = createFrame(dropdownList, {
-            Size = UDim2.new(1, -10, 0, 25),
-            Position = UDim2.new(0, 5, 0, (i-1) * 25 + 5),
-            BackgroundColor3 = Color3.fromRGB(45, 45, 50),
+            Size = UDim2.new(1, -10, 0, 30),
+            Position = UDim2.new(0, 5, 0, (i-1) * 30 + 5),
+            BackgroundColor3 = self.theme.primary,
             BorderSizePixel = 0
         })
         
-        createUICorner(optionButton, {CornerRadius = UDim.new(0, 4)})
+        createUICorner(optionButton, {CornerRadius = UDim.new(0, 6)})
         
         local optionText = createTextLabel(optionButton, {
             Size = UDim2.new(1, -10, 1, 0),
             Position = UDim2.new(0, 5, 0, 0),
             BackgroundTransparency = 1,
             Text = option,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextColor3 = self.theme.text,
             TextScaled = true,
             Font = Enum.Font.Gotham,
             TextXAlignment = Enum.TextXAlignment.Left
         })
         
         optionButton.MouseEnter:Connect(function()
-            tween(optionButton, {BackgroundColor3 = Color3.fromRGB(55, 55, 60)})
+            tween(optionButton, {BackgroundColor3 = self.theme.accent})
         end)
         
         optionButton.MouseLeave:Connect(function()
-            tween(optionButton, {BackgroundColor3 = Color3.fromRGB(45, 45, 50)})
+            tween(optionButton, {BackgroundColor3 = self.theme.primary})
         end)
         
         optionButton.MouseButton1Click:Connect(function()
@@ -616,120 +754,33 @@ function RobloxUILibrary:createDropdown(parent, options, default, callback)
     }
 end
 
-function RobloxUILibrary:createColorPicker(parent, defaultColor, callback)
-    local colorPickerFrame = createFrame(parent, {
-        Size = UDim2.new(1, 0, 0, 60),
-        BackgroundTransparency = 1
-    })
+function AdvancedRobloxUILibrary:createNotification(title, message, duration, type)
+    type = type or "info"
     
-    local colorPreview = createFrame(colorPickerFrame, {
-        Size = UDim2.new(0, 40, 0, 40),
-        Position = UDim2.new(1, -45, 0, 0),
-        BackgroundColor3 = defaultColor or Color3.fromRGB(255, 255, 255),
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(colorPreview, {CornerRadius = UDim.new(0, 6)})
-    createUIStroke(colorPreview, {Color = Color3.fromRGB(70, 70, 75), Thickness = 1})
-    
-    local colorText = createTextLabel(colorPickerFrame, {
-        Size = UDim2.new(1, -50, 0, 20),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundTransparency = 1,
-        Text = "Color Picker",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextScaled = true,
-        Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-    
-    local currentColor = defaultColor or Color3.fromRGB(255, 255, 255)
-    
-    colorPreview.MouseButton1Click:Connect(function()
-        local colorPicker = self:createColorPickerWindow(currentColor, function(color)
-            currentColor = color
-            colorPreview.BackgroundColor3 = color
-            if callback then
-                callback(color)
-            end
-        end)
-    end)
-    
-    return {
-        frame = colorPickerFrame,
-        setColor = function(color)
-            currentColor = color
-            colorPreview.BackgroundColor3 = color
-        end,
-        getColor = function() return currentColor end
+    local notificationColors = {
+        info = {bg = self.theme.accent, border = self.theme.accent},
+        success = {bg = self.theme.success, border = self.theme.success},
+        warning = {bg = self.theme.warning, border = self.theme.warning},
+        error = {bg = self.theme.error, border = self.theme.error}
     }
-end
-
-function RobloxUILibrary:createColorPickerWindow(defaultColor, callback)
-    local window = self:createWindow("Color Picker", UDim2.new(0, 300, 0, 250))
     
-    local colorPreview = createFrame(window.contentFrame, {
-        Size = UDim2.new(1, 0, 0, 60),
-        BackgroundColor3 = defaultColor or Color3.fromRGB(255, 255, 255),
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(colorPreview, {CornerRadius = UDim.new(0, 6)})
-    createUIStroke(colorPreview, {Color = Color3.fromRGB(70, 70, 75), Thickness = 1})
-    
-    local hueSlider = self:createSlider(window.contentFrame, 0, 360, 0, function(hue)
-        local hsv = Color3.toHSV(colorPreview.BackgroundColor3)
-        local newColor = Color3.fromHSV(hue/360, hsv.Y, hsv.Z)
-        colorPreview.BackgroundColor3 = newColor
-        if callback then
-            callback(newColor)
-        end
-    end)
-    
-    hueSlider.frame.Position = UDim2.new(0, 0, 0, 70)
-    
-    local saturationSlider = self:createSlider(window.contentFrame, 0, 100, 100, function(saturation)
-        local hsv = Color3.toHSV(colorPreview.BackgroundColor3)
-        local newColor = Color3.fromHSV(hsv.X, saturation/100, hsv.Z)
-        colorPreview.BackgroundColor3 = newColor
-        if callback then
-            callback(newColor)
-        end
-    end)
-    
-    saturationSlider.frame.Position = UDim2.new(0, 0, 0, 120)
-    
-    local valueSlider = self:createSlider(window.contentFrame, 0, 100, 100, function(value)
-        local hsv = Color3.toHSV(colorPreview.BackgroundColor3)
-        local newColor = Color3.fromHSV(hsv.X, hsv.Y, value/100)
-        colorPreview.BackgroundColor3 = newColor
-        if callback then
-            callback(newColor)
-        end
-    end)
-    
-    valueSlider.frame.Position = UDim2.new(0, 0, 0, 170)
-    
-    return window
-end
-
-function RobloxUILibrary:createNotification(title, message, duration)
     local notification = createFrame(self.screenGui, {
-        Size = UDim2.new(0, 300, 0, 80),
-        Position = UDim2.new(1, -320, 0, 20),
-        BackgroundColor3 = Color3.fromRGB(30, 30, 35),
+        Size = UDim2.new(0, 350, 0, 90),
+        Position = UDim2.new(1, -370, 0, 20),
+        BackgroundColor3 = notificationColors[type].bg,
         BorderSizePixel = 0
     })
     
-    createUICorner(notification, {CornerRadius = UDim.new(0, 8)})
-    createUIStroke(notification, {Color = Color3.fromRGB(60, 60, 65), Thickness = 1})
+    createUICorner(notification, {CornerRadius = UDim.new(0, 12)})
+    createUIStroke(notification, {Color = notificationColors[type].border, Thickness = 2})
+    createShadow(notification)
     
     local titleLabel = createTextLabel(notification, {
         Size = UDim2.new(1, -20, 0, 25),
-        Position = UDim2.new(0, 10, 0, 5),
+        Position = UDim2.new(0, 15, 0, 10),
         BackgroundTransparency = 1,
         Text = title or "Notification",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = self.theme.text,
         TextScaled = true,
         Font = Enum.Font.GothamBold,
         TextXAlignment = Enum.TextXAlignment.Left
@@ -737,10 +788,10 @@ function RobloxUILibrary:createNotification(title, message, duration)
     
     local messageLabel = createTextLabel(notification, {
         Size = UDim2.new(1, -20, 0, 40),
-        Position = UDim2.new(0, 10, 0, 30),
+        Position = UDim2.new(0, 15, 0, 35),
         BackgroundTransparency = 1,
         Text = message or "",
-        TextColor3 = Color3.fromRGB(200, 200, 200),
+        TextColor3 = self.theme.text,
         TextScaled = true,
         Font = Enum.Font.Gotham,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -748,11 +799,11 @@ function RobloxUILibrary:createNotification(title, message, duration)
     })
     
     local closeButton = createTextLabel(notification, {
-        Size = UDim2.new(0, 20, 0, 20),
-        Position = UDim2.new(1, -25, 0, 5),
+        Size = UDim2.new(0, 25, 0, 25),
+        Position = UDim2.new(1, -30, 0, 10),
         BackgroundTransparency = 1,
         Text = "×",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = self.theme.text,
         TextScaled = true,
         Font = Enum.Font.GothamBold
     })
@@ -771,10 +822,10 @@ function RobloxUILibrary:createNotification(title, message, duration)
     return notification
 end
 
-function RobloxUILibrary:destroy()
+function AdvancedRobloxUILibrary:destroy()
     if self.screenGui then
         self.screenGui:Destroy()
     end
 end
 
-return RobloxUILibrary 
+return AdvancedRobloxUILibrary 
