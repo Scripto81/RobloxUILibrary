@@ -5,6 +5,72 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local SoundService = game:GetService("SoundService")
+
+-- Enhanced configuration
+local Config = {
+    Theme = "Dark", -- Dark, Light, Custom
+    AccentColor = Color3.fromRGB(114, 137, 228),
+    BackgroundColor = Color3.fromRGB(32, 34, 37),
+    TextColor = Color3.fromRGB(255, 255, 255),
+    SecondaryColor = Color3.fromRGB(47, 49, 54),
+    AnimationSpeed = 0.3,
+    EnableSounds = true,
+    EnableAnimations = true,
+    EnableGlow = true,
+    EnableBlur = false,
+    SaveSettings = true,
+    AutoSave = true,
+    Notifications = true
+}
+
+-- Sound effects
+local Sounds = {
+    Click = "rbxasset://sounds/click.wav",
+    Hover = "rbxasset://sounds/hover.wav",
+    Notification = "rbxasset://sounds/notification.wav"
+}
+
+-- Utility functions
+local function PlaySound(soundName)
+    if Config.EnableSounds then
+        local sound = Instance.new("Sound")
+        sound.SoundId = Sounds[soundName] or Sounds.Click
+        sound.Volume = 0.3
+        sound.Parent = SoundService
+        sound:Play()
+        game:GetService("Debris"):AddItem(sound, 1)
+    end
+end
+
+local function CreateGlow(parent, color)
+    if Config.EnableGlow then
+        local glow = Instance.new("ImageLabel")
+        glow.Name = "Glow"
+        glow.BackgroundTransparency = 1
+        glow.Position = UDim2.new(-0.1, 0, -0.1, 0)
+        glow.Size = UDim2.new(1.2, 0, 1.2, 0)
+        glow.ZIndex = parent.ZIndex - 1
+        glow.Image = "rbxassetid://4996891970"
+        glow.ImageColor3 = color or Config.AccentColor
+        glow.ScaleType = Enum.ScaleType.Slice
+        glow.SliceCenter = Rect.new(20, 20, 280, 280)
+        glow.Parent = parent
+        return glow
+    end
+end
+
+local function CreateBlur()
+    if Config.EnableBlur then
+        local blur = Instance.new("BlurEffect")
+        blur.Size = 10
+        blur.Parent = game:GetService("Lighting")
+        return blur
+    end
+end
+
 local pfp
 local user
 local tag
@@ -1541,10 +1607,11 @@ function AYXDiscordUILibrary:Window(text)
 		NotificationHolderMain.TextSize = 14.000
 		TweenService:Create(
 			NotificationHolderMain,
-			TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 			{BackgroundTransparency = 0.2}
 		):Play()
 		
+		PlaySound("Notification")
 
 		Notification.Name = "Notification"
 		Notification.Parent = NotificationHolderMain
@@ -1555,13 +1622,17 @@ function AYXDiscordUILibrary:Window(text)
 		Notification.Size = UDim2.new(0, 0, 0, 0)
 		Notification.BackgroundTransparency = 1
 		
-		Notification:TweenSize(UDim2.new(0, 346, 0, 176), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .2, true)
+		Notification:TweenSize(UDim2.new(0, 346, 0, 176), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, Config.AnimationSpeed, true)
 		
 		TweenService:Create(
 			Notification,
-			TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 			{BackgroundTransparency = 0}
 		):Play()
+		
+		if Config.EnableGlow then
+			CreateGlow(Notification, Config.AccentColor)
+		end
 
 		NotificationCorner.CornerRadius = UDim.new(0, 5)
 		NotificationCorner.Name = "NotificationCorner"
@@ -1623,25 +1694,27 @@ function AYXDiscordUILibrary:Window(text)
 		AlrightCorner.Parent = AlrightBtn
 		
 		AlrightBtn.MouseButton1Click:Connect(function()
+			PlaySound("Click")
 			TweenService:Create(
 				NotificationHolderMain,
-				TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 				{BackgroundTransparency = 1}
 			):Play()
-			Notification:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .2, true)
+			Notification:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, Config.AnimationSpeed, true)
 			TweenService:Create(
 				Notification,
-				TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 				{BackgroundTransparency = 1}
 			):Play()
-			wait(.2)
+			wait(Config.AnimationSpeed)
 			NotificationHolderMain:Destroy()
 		end)
 		
 		AlrightBtn.MouseEnter:Connect(function()
+			PlaySound("Hover")
 			TweenService:Create(
 				AlrightBtn,
-				TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 				{BackgroundColor3 = Color3.fromRGB(103,123,196)}
 			):Play()
 		end)
@@ -1649,8 +1722,175 @@ function AYXDiscordUILibrary:Window(text)
 		AlrightBtn.MouseLeave:Connect(function()
 			TweenService:Create(
 				AlrightBtn,
-				TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 				{BackgroundColor3 = Color3.fromRGB(114, 137, 228)}
+			):Play()
+		end)
+	end
+	
+	-- Enhanced notification with types
+	function AYXDiscordUILibrary:Notify(titletext, desctext, btntext, notifType)
+		notifType = notifType or "Info"
+		local colors = {
+			Success = Color3.fromRGB(67, 181, 129),
+			Error = Color3.fromRGB(240, 71, 71),
+			Warning = Color3.fromRGB(255, 193, 7),
+			Info = Color3.fromRGB(114, 137, 228)
+		}
+		
+		local NotificationHolderMain = Instance.new("TextButton")
+		local Notification = Instance.new("Frame")
+		local NotificationCorner = Instance.new("UICorner")
+		local UnderBar = Instance.new("Frame")
+		local UnderBarCorner = Instance.new("UICorner")
+		local UnderBarFrame = Instance.new("Frame")
+		local Text1 = Instance.new("TextLabel")
+		local Text2 = Instance.new("TextLabel")
+		local AlrightBtn = Instance.new("TextButton")
+		local AlrightCorner = Instance.new("UICorner")
+		local Icon = Instance.new("ImageLabel")
+
+		NotificationHolderMain.Name = "NotificationHolderMain"
+		NotificationHolderMain.Parent = MainFrame
+		NotificationHolderMain.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+		NotificationHolderMain.BackgroundTransparency = 1
+		NotificationHolderMain.BorderSizePixel = 0
+		NotificationHolderMain.Position = UDim2.new(0, 0, 0.0560000017, 0)
+		NotificationHolderMain.Size = UDim2.new(0, 681, 0, 374)
+		NotificationHolderMain.AutoButtonColor = false
+		NotificationHolderMain.Font = Enum.Font.SourceSans
+		NotificationHolderMain.Text = ""
+		NotificationHolderMain.TextColor3 = Color3.fromRGB(0, 0, 0)
+		NotificationHolderMain.TextSize = 14.000
+		
+		TweenService:Create(
+			NotificationHolderMain,
+			TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{BackgroundTransparency = 0.2}
+		):Play()
+		
+		PlaySound("Notification")
+
+		Notification.Name = "Notification"
+		Notification.Parent = NotificationHolderMain
+		Notification.AnchorPoint = Vector2.new(0.5, 0.5)
+		Notification.BackgroundColor3 = Color3.fromRGB(54, 57, 63)
+		Notification.ClipsDescendants = true
+		Notification.Position = UDim2.new(0.524819076, 0, 0.469270051, 0)
+		Notification.Size = UDim2.new(0, 0, 0, 0)
+		Notification.BackgroundTransparency = 1
+		
+		Notification:TweenSize(UDim2.new(0, 346, 0, 176), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, Config.AnimationSpeed, true)
+		
+		TweenService:Create(
+			Notification,
+			TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{BackgroundTransparency = 0}
+		):Play()
+		
+		if Config.EnableGlow then
+			CreateGlow(Notification, colors[notifType])
+		end
+
+		NotificationCorner.CornerRadius = UDim.new(0, 5)
+		NotificationCorner.Name = "NotificationCorner"
+		NotificationCorner.Parent = Notification
+
+		Icon.Name = "Icon"
+		Icon.Parent = Notification
+		Icon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		Icon.BackgroundTransparency = 1.000
+		Icon.Position = UDim2.new(0.02, 0, 0.1, 0)
+		Icon.Size = UDim2.new(0, 30, 0, 30)
+		Icon.Image = "rbxassetid://6035047409"
+		Icon.ImageColor3 = colors[notifType]
+
+		UnderBar.Name = "UnderBar"
+		UnderBar.Parent = Notification
+		UnderBar.BackgroundColor3 = Color3.fromRGB(47, 49, 54)
+		UnderBar.Position = UDim2.new(-0.000297061284, 0, 0.945048928, 0)
+		UnderBar.Size = UDim2.new(0, 346, 0, 10)
+
+		UnderBarCorner.CornerRadius = UDim.new(0, 5)
+		UnderBarCorner.Name = "UnderBarCorner"
+		UnderBarCorner.Parent = UnderBar
+
+		UnderBarFrame.Name = "UnderBarFrame"
+		UnderBarFrame.Parent = UnderBar
+		UnderBarFrame.BackgroundColor3 = Color3.fromRGB(47, 49, 54)
+		UnderBarFrame.BorderSizePixel = 0
+		UnderBarFrame.Position = UDim2.new(-0.000297061284, 0, -3.76068449, 0)
+		UnderBarFrame.Size = UDim2.new(0, 346, 0, 40)
+
+		Text1.Name = "Text1"
+		Text1.Parent = Notification
+		Text1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		Text1.BackgroundTransparency = 1.000
+		Text1.Position = UDim2.new(0.1, 0, 0.0202020202, 0)
+		Text1.Size = UDim2.new(0, 300, 0, 68)
+		Text1.Font = Enum.Font.GothamSemibold
+		Text1.Text = titletext
+		Text1.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Text1.TextSize = 20.000
+
+		Text2.Name = "Text2"
+		Text2.Parent = Notification
+		Text2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		Text2.BackgroundTransparency = 1.000
+		Text2.Position = UDim2.new(0.106342293, 0, 0.317724228, 0)
+		Text2.Size = UDim2.new(0, 272, 0, 63)
+		Text2.Font = Enum.Font.Gotham
+		Text2.Text = desctext
+		Text2.TextColor3 = Color3.fromRGB(171, 172, 176)
+		Text2.TextSize = 14.000
+		Text2.TextWrapped = true
+
+		AlrightBtn.Name = "AlrightBtn"
+		AlrightBtn.Parent = Notification
+		AlrightBtn.BackgroundColor3 = colors[notifType]
+		AlrightBtn.Position = UDim2.new(0.0332369953, 0, 0.789141417, 0)
+		AlrightBtn.Size = UDim2.new(0, 322, 0, 27)
+		AlrightBtn.Font = Enum.Font.Gotham
+		AlrightBtn.Text = btntext
+		AlrightBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		AlrightBtn.TextSize = 13.000
+		AlrightBtn.AutoButtonColor = false
+		
+		AlrightCorner.CornerRadius = UDim.new(0, 4)
+		AlrightCorner.Name = "AlrightCorner"
+		AlrightCorner.Parent = AlrightBtn
+		
+		AlrightBtn.MouseButton1Click:Connect(function()
+			PlaySound("Click")
+			TweenService:Create(
+				NotificationHolderMain,
+				TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{BackgroundTransparency = 1}
+			):Play()
+			Notification:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, Config.AnimationSpeed, true)
+			TweenService:Create(
+				Notification,
+				TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{BackgroundTransparency = 1}
+			):Play()
+			wait(Config.AnimationSpeed)
+			NotificationHolderMain:Destroy()
+		end)
+		
+		AlrightBtn.MouseEnter:Connect(function()
+			PlaySound("Hover")
+			TweenService:Create(
+				AlrightBtn,
+				TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{BackgroundColor3 = Color3.fromRGB(103,123,196)}
+			):Play()
+		end)
+
+		AlrightBtn.MouseLeave:Connect(function()
+			TweenService:Create(
+				AlrightBtn,
+				TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{BackgroundColor3 = colors[notifType]}
 			):Play()
 		end)
 	end
@@ -2144,19 +2384,24 @@ function AYXDiscordUILibrary:Window(text)
 				ButtonCorner.Parent = Button
 				
 				Button.MouseEnter:Connect(function()
+					PlaySound("Hover")
 					TweenService:Create(
 						Button,
-						TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+						TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 						{BackgroundColor3 = Color3.fromRGB(103,123,196)}
 					):Play()
+					if Config.EnableGlow then
+						CreateGlow(Button, Config.AccentColor)
+					end
 				end)
 				
 				Button.MouseButton1Click:Connect(function()
+					PlaySound("Click")
 					pcall(callback)
 					Button.TextSize = 0
 					TweenService:Create(
 						Button,
-						TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+						TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 						{TextSize = 14}
 					):Play()
 				end)
@@ -2164,9 +2409,13 @@ function AYXDiscordUILibrary:Window(text)
 				Button.MouseLeave:Connect(function()
 					TweenService:Create(
 						Button,
-						TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+						TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 						{BackgroundColor3 = Color3.fromRGB(114, 137, 228)}
 					):Play()
+					local glow = Button:FindFirstChild("Glow")
+					if glow then
+						glow:Destroy()
+					end
 				end)
 				ChannelHolder.CanvasSize = UDim2.new(0,0,0,ChannelHolderLayout.AbsoluteContentSize.Y)
 			end
@@ -2236,52 +2485,53 @@ function AYXDiscordUILibrary:Window(text)
 				Icon.ImageColor3 = Color3.fromRGB(114, 118, 125)
 				
 				Toggle.MouseButton1Click:Connect(function()
+					PlaySound("Click")
 					if toggled == false then
 						TweenService:Create(
 							Icon,
-							TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+							TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 							{ImageColor3 = Color3.fromRGB(67,181,129)}
 						):Play()
 						TweenService:Create(
 							ToggleFrame,
-							TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+							TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 							{BackgroundColor3 = Color3.fromRGB(67,181,129)}
 						):Play()
-						ToggleFrameCircle:TweenPosition(UDim2.new(0.655, -5, 0.133000001, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .3, true)
+						ToggleFrameCircle:TweenPosition(UDim2.new(0.655, -5, 0.133000001, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, Config.AnimationSpeed, true)
 						TweenService:Create(
 							Icon,
-							TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+							TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 							{ImageTransparency = 1}
 						):Play()
 						Icon.Image = "http://www.roblox.com/asset/?id=6023426926"
 						wait(.1)
 						TweenService:Create(
 							Icon,
-							TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+							TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 							{ImageTransparency = 0}
 						):Play()
 					else
 						TweenService:Create(
 							Icon,
-							TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+							TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 							{ImageColor3 = Color3.fromRGB(114, 118, 125)}
 						):Play()
 						TweenService:Create(
 							ToggleFrame,
-							TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+							TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 							{BackgroundColor3 = Color3.fromRGB(114, 118, 125)}
 						):Play()
-						ToggleFrameCircle:TweenPosition(UDim2.new(0.234999999, -5, 0.133000001, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .3, true)
+						ToggleFrameCircle:TweenPosition(UDim2.new(0.234999999, -5, 0.133000001, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, Config.AnimationSpeed, true)
 						TweenService:Create(
 							Icon,
-							TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+							TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 							{ImageTransparency = 1}
 						):Play()
 						Icon.Image = "http://www.roblox.com/asset/?id=6035047409"
 						wait(.1)
 						TweenService:Create(
 							Icon,
-							TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+							TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 							{ImageTransparency = 0}
 						):Play()
 					end
@@ -3244,4 +3494,77 @@ function AYXDiscordUILibrary:Window(text)
 	end
 	return ServerHold
 end
+	-- Theme system
+	function AYXDiscordUILibrary:SetTheme(theme)
+		if theme == "Dark" then
+			Config.BackgroundColor = Color3.fromRGB(32, 34, 37)
+			Config.SecondaryColor = Color3.fromRGB(47, 49, 54)
+			Config.TextColor = Color3.fromRGB(255, 255, 255)
+		elseif theme == "Light" then
+			Config.BackgroundColor = Color3.fromRGB(255, 255, 255)
+			Config.SecondaryColor = Color3.fromRGB(240, 240, 240)
+			Config.TextColor = Color3.fromRGB(0, 0, 0)
+		end
+		Config.Theme = theme
+	end
+	
+	function AYXDiscordUILibrary:SetAccentColor(color)
+		Config.AccentColor = color
+	end
+	
+	function AYXDiscordUILibrary:SetAnimationSpeed(speed)
+		Config.AnimationSpeed = speed
+	end
+	
+	function AYXDiscordUILibrary:ToggleSounds(enabled)
+		Config.EnableSounds = enabled
+	end
+	
+	function AYXDiscordUILibrary:ToggleGlow(enabled)
+		Config.EnableGlow = enabled
+	end
+	
+	function AYXDiscordUILibrary:ToggleBlur(enabled)
+		Config.EnableBlur = enabled
+		if enabled then
+			CreateBlur()
+		else
+			local lighting = game:GetService("Lighting")
+			local blur = lighting:FindFirstChild("BlurEffect")
+			if blur then
+				blur:Destroy()
+			end
+		end
+	end
+	
+	function AYXDiscordUILibrary:GetConfig()
+		return Config
+	end
+	
+	function AYXDiscordUILibrary:SaveConfig()
+		if Config.SaveSettings then
+			writefile("ayxdiscordlib_config.txt", HttpService:JSONEncode(Config))
+		end
+	end
+	
+	function AYXDiscordUILibrary:LoadConfig()
+		if Config.SaveSettings then
+			local success, result = pcall(function()
+				return HttpService:JSONDecode(readfile("ayxdiscordlib_config.txt"))
+			end)
+			if success then
+				Config = result
+			end
+		end
+	end
+	
+	-- Auto-save config
+	if Config.AutoSave then
+		spawn(function()
+			while wait(30) do
+				AYXDiscordUILibrary:SaveConfig()
+			end
+		end)
+	end
+	
 	return AYXDiscordUILibrary
