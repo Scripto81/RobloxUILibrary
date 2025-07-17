@@ -48,18 +48,8 @@ end
 
 local function createImageButton(parent, properties)
     local imageButton = Instance.new("ImageButton")
-    local validProperties = {
-        Name = true, BackgroundColor3 = true, BackgroundTransparency = true, BorderColor3 = true, BorderSizePixel = true,
-        Position = true, Size = true, AnchorPoint = true, Rotation = true, LayoutOrder = true, ZIndex = true,
-        Visible = true, Active = true, Draggable = true, AutoButtonColor = true, Image = true, ImageColor3 = true,
-        ImageRectOffset = true, ImageRectSize = true, ImageTransparency = true, ScaleType = true, SliceCenter = true,
-        SliceScale = true, TileSize = true, HoverImage = true, PressedImage = true, SelectedImage = true
-    }
-    
     for key, value in pairs(properties) do
-        if validProperties[key] then
-            imageButton[key] = value
-        end
+        imageButton[key] = value
     end
     imageButton.Parent = parent
     return imageButton
@@ -235,7 +225,8 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         Position = UDim2.new(0.959063113, 0, -0.0169996787, 0),
         Size = UDim2.new(0, 28, 0, 22),
         BorderSizePixel = 0,
-        AutoButtonColor = false
+        AutoButtonColor = false,
+        Image = ""
     })
     
     local CloseIcon = createTextLabel(CloseBtn, {
@@ -258,7 +249,8 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         Position = UDim2.new(0.917947114, 0, -0.0169996787, 0),
         Size = UDim2.new(0, 28, 0, 22),
         BorderSizePixel = 0,
-        AutoButtonColor = false
+        AutoButtonColor = false,
+        Image = ""
     })
     
     local MinimizeIcon = createTextLabel(MinimizeBtn, {
