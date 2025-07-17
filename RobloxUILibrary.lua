@@ -3639,7 +3639,13 @@ function AYXDiscordUILibrary:Window(text)
 		end
 		
 		return ChannelHold
+			end
+	
+	-- Add Notify function to ServerHold
+	ServerHold.Notify = function(titletext, desctext, btntext, notifType, duration)
+		return AYXDiscordUILibrary:Notify(titletext, desctext, btntext, notifType, duration)
 	end
+	
 	return ServerHold
 end
 	-- Theme system
@@ -3652,6 +3658,8 @@ end
 			Config.BackgroundColor = Color3.fromRGB(255, 255, 255)
 			Config.SecondaryColor = Color3.fromRGB(240, 240, 240)
 			Config.TextColor = Color3.fromRGB(0, 0, 0)
+		elseif theme == "Custom" then
+			-- Keep current colors for custom theme
 		end
 		Config.Theme = theme
 	end
@@ -3698,6 +3706,120 @@ end
 		end
 	end
 	
+	-- Enhanced color and theme functions
+	function AYXDiscordUILibrary:SetColor(which, color)
+		if Config[which] ~= nil then
+			if typeof(color) == "Color3" then
+				Config[which] = color
+			elseif typeof(color) == "boolean" then
+				Config[which] = color
+			elseif typeof(color) == "number" then
+				Config[which] = color
+			end
+		end
+	end
+	
+	function AYXDiscordUILibrary:SetThemeColors(tbl)
+		for k, v in pairs(tbl) do
+			if Config[k] ~= nil and typeof(v) == "Color3" then
+				Config[k] = v
+			end
+		end
+	end
+	
+	function AYXDiscordUILibrary:SaveTheme(name)
+		if typeof(name) ~= "string" then return end
+		local theme = {
+			AccentColor = Config.AccentColor,
+			BackgroundColor = Config.BackgroundColor,
+			TextColor = Config.TextColor,
+			SecondaryColor = Config.SecondaryColor,
+			EnableRainbowMode = Config.EnableRainbowMode,
+			EnableParticles = Config.EnableParticles,
+			EnableTooltips = Config.EnableTooltips,
+			EnableMouseEffects = Config.EnableMouseEffects,
+			EnablePerformanceMode = Config.EnablePerformanceMode,
+			EnableSmoothScrolling = Config.EnableSmoothScrolling
+		}
+		writefile("ayxdiscordlib_theme_"..name..".txt", HttpService:JSONEncode(theme))
+	end
+	
+	function AYXDiscordUILibrary:LoadTheme(name)
+		if typeof(name) ~= "string" then return end
+		local success, data = pcall(function()
+			return HttpService:JSONDecode(readfile("ayxdiscordlib_theme_"..name..".txt"))
+		end)
+		if success and typeof(data) == "table" then
+			for k, v in pairs(data) do
+				if Config[k] ~= nil then
+					Config[k] = v
+				end
+			end
+		end
+	end
+	
+	-- Rainbow mode cycling
+	spawn(function()
+		while wait(0.1) do
+			if Config.EnableRainbowMode then
+				local hue = tick() % 1
+				Config.AccentColor = Color3.fromHSV(hue, 1, 1)
+			end
+		end
+	end)
+	
+	-- Particle effects
+	local function CreateParticleEffect(parent)
+		if Config.EnableParticles then
+			local particle = Instance.new("Part")
+			particle.Shape = Enum.PartType.Ball
+			particle.Size = Vector3.new(0.1, 0.1, 0.1)
+			particle.Material = Enum.Material.Neon
+			particle.BrickColor = BrickColor.new(Config.AccentColor)
+			particle.Anchored = true
+			particle.CanCollide = false
+			particle.Parent = workspace
+			
+			local bodyVelocity = Instance.new("BodyVelocity")
+			bodyVelocity.Velocity = Vector3.new(math.random(-10, 10), math.random(5, 15), math.random(-10, 10))
+			bodyVelocity.Parent = particle
+			
+			game:GetService("Debris"):AddItem(particle, 2)
+		end
+	end
+	
+	-- Mouse effects
+	local function CreateMouseTrail()
+		if Config.EnableMouseEffects then
+			local trail = Instance.new("Trail")
+			trail.Color = ColorSequence.new(Config.AccentColor)
+			trail.Transparency = NumberSequence.new(0, 1)
+			trail.Lifetime = 0.5
+			trail.Parent = game.Players.LocalPlayer.Character.HumanoidRootPart
+			game:GetService("Debris"):AddItem(trail, 1)
+		end
+	end
+	
+	-- Tooltips
+	local function CreateTooltip(text, parent)
+		if Config.EnableTooltips then
+			local tooltip = Instance.new("TextLabel")
+			tooltip.Text = text
+			tooltip.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			tooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
+			tooltip.Size = UDim2.new(0, 200, 0, 30)
+			tooltip.Position = UDim2.new(0, 0, -1.2, 0)
+			tooltip.Parent = parent
+			tooltip.ZIndex = 1000
+			
+			local corner = Instance.new("UICorner")
+			corner.CornerRadius = UDim.new(0, 5)
+			corner.Parent = tooltip
+			
+			return tooltip
+		end
+	end
+	
 	-- Auto-save config
 	if Config.AutoSave then
 		spawn(function()
@@ -3706,5 +3828,24 @@ end
 			end
 		end)
 	end
+	
+	-- Add missing functions that the example uses
+	function AYXDiscordUILibrary:SetTheme(theme)
+		if theme == "Dark" then
+			Config.BackgroundColor = Color3.fromRGB(32, 34, 37)
+			Config.SecondaryColor = Color3.fromRGB(47, 49, 54)
+			Config.TextColor = Color3.fromRGB(255, 255, 255)
+		elseif theme == "Light" then
+			Config.BackgroundColor = Color3.fromRGB(255, 255, 255)
+			Config.SecondaryColor = Color3.fromRGB(240, 240, 240)
+			Config.TextColor = Color3.fromRGB(0, 0, 0)
+		elseif theme == "Custom" then
+			-- Keep current colors for custom theme
+		end
+		Config.Theme = theme
+	end
+	
+	-- Enhanced notification function for Window objects
+	-- This will be added to each Window object when created
 	
 	return AYXDiscordUILibrary
