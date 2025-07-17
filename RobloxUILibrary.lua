@@ -491,12 +491,14 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
 end
 
 function DiscordStyleUILibrary:createServer(window, name, icon)
-    local ServerFrame = createFrame(window.serversHolder, {
+    local ServerFrame = createImageButton(window.serversHolder, {
         Name = name,
         BackgroundColor3 = self.theme.tertiary,
         BorderSizePixel = 0,
         Size = UDim2.new(0, 48, 0, 48),
-        Position = UDim2.new(0, 12, 0, 10 + (#window.serversHolder:GetChildren() * 58))
+        Position = UDim2.new(0, 12, 0, 10 + (#window.serversHolder:GetChildren() * 58)),
+        AutoButtonColor = false,
+        Image = ""
     })
     
     createUICorner(ServerFrame, {CornerRadius = UDim.new(0, 24)})
@@ -525,7 +527,7 @@ function DiscordStyleUILibrary:createServer(window, name, icon)
     ServerFrame.MouseButton1Click:Connect(function()
         -- Handle server selection
         for _, server in pairs(window.serversHolder:GetChildren()) do
-            if server:IsA("Frame") and server.Name ~= "ServersHold" then
+            if server:IsA("GuiButton") and server.Name ~= "ServersHold" then
                 tween(server, {BackgroundColor3 = self.theme.tertiary})
             end
         end
@@ -536,12 +538,14 @@ function DiscordStyleUILibrary:createServer(window, name, icon)
 end
 
 function DiscordStyleUILibrary:createChannel(window, name, callback)
-    local ChannelFrame = createFrame(window.channelHolder, {
+    local ChannelFrame = createImageButton(window.channelHolder, {
         Name = name,
         BackgroundColor3 = self.theme.tertiary,
         BorderSizePixel = 0,
         Size = UDim2.new(0, 180, 0, 28),
-        Position = UDim2.new(0, 10, 0, 5 + (#window.channelHolder:GetChildren() * 33))
+        Position = UDim2.new(0, 10, 0, 5 + (#window.channelHolder:GetChildren() * 33)),
+        AutoButtonColor = false,
+        Image = ""
     })
     
     createUICorner(ChannelFrame, {CornerRadius = UDim.new(0, 4)})
@@ -577,12 +581,14 @@ function DiscordStyleUILibrary:createChannel(window, name, callback)
 end
 
 function DiscordStyleUILibrary:createButton(parent, text, callback)
-    local ButtonFrame = createFrame(parent, {
+    local ButtonFrame = createImageButton(parent, {
         Name = "Button",
         BackgroundColor3 = self.theme.tertiary,
         BorderSizePixel = 0,
         Size = UDim2.new(0, 380, 0, 32),
-        Position = UDim2.new(0, 10, 0, 5 + (#parent:GetChildren() * 37))
+        Position = UDim2.new(0, 10, 0, 5 + (#parent:GetChildren() * 37)),
+        AutoButtonColor = false,
+        Image = ""
     })
     
     createUICorner(ButtonFrame, {CornerRadius = UDim.new(0, 6)})
