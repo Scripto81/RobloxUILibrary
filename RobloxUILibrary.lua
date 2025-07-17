@@ -40,6 +40,87 @@ local Config = {
     MaxSoundErrors = 5
 }
 
+-- Store hover effect colors for dynamic updates
+local HoverColors = {
+    ButtonHover = Color3.fromRGB(103, 123, 196),
+    ButtonNormal = Color3.fromRGB(114, 137, 228),
+    ServerHover = Color3.fromRGB(114, 137, 228),
+    ServerNormal = Color3.fromRGB(47, 49, 54),
+    ChannelHover = Color3.fromRGB(52, 55, 60),
+    ChannelNormal = Color3.fromRGB(47, 49, 54)
+}
+
+-- Function to update hover colors based on current theme
+local function UpdateHoverColors()
+    local accentColor = Config.AccentColor
+    local darkerAccent = Color3.fromRGB(
+        math.floor(accentColor.R * 0.9 * 255),
+        math.floor(accentColor.G * 0.9 * 255),
+        math.floor(accentColor.B * 0.9 * 255)
+    )
+    
+    HoverColors.ButtonHover = darkerAccent
+    HoverColors.ButtonNormal = accentColor
+    HoverColors.ServerHover = accentColor
+    HoverColors.ServerNormal = Config.SecondaryColor
+    HoverColors.ChannelHover = Color3.fromRGB(
+        math.floor(Config.SecondaryColor.R * 1.1 * 255),
+        math.floor(Config.SecondaryColor.G * 1.1 * 255),
+        math.floor(Config.SecondaryColor.B * 1.1 * 255)
+    )
+    HoverColors.ChannelNormal = Config.SecondaryColor
+end
+
+-- Function to update all existing hover effects
+local function UpdateAllHoverEffects()
+    UpdateHoverColors()
+    
+    -- Update all buttons in the UI
+    local function updateButtonHoverEffects(parent)
+        for _, child in pairs(parent:GetDescendants()) do
+            if child:IsA("TextButton") then
+                -- Clear existing connections and reconnect with new colors
+                for _, connection in pairs(getconnections(child.MouseEnter)) do
+                    connection:Disconnect()
+                end
+                for _, connection in pairs(getconnections(child.MouseLeave)) do
+                    connection:Disconnect()
+                end
+                
+                -- Reconnect with updated colors
+                child.MouseEnter:Connect(function()
+                    PlaySound("Hover")
+                    TweenService:Create(
+                        child,
+                        TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                        {BackgroundColor3 = HoverColors.ButtonHover}
+                    ):Play()
+                    if Config.EnableGlow then
+                        CreateGlow(child, Config.AccentColor)
+                    end
+                end)
+                
+                child.MouseLeave:Connect(function()
+                    TweenService:Create(
+                        child,
+                        TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                        {BackgroundColor3 = HoverColors.ButtonNormal}
+                    ):Play()
+                    local glow = child:FindFirstChild("Glow")
+                    if glow then
+                        glow:Destroy()
+                    end
+                end)
+            end
+        end
+    end
+    
+    -- Update the main Discord UI
+    if Discord then
+        updateButtonHoverEffects(Discord)
+    end
+end
+
 -- Sound effects with fallbacks
 local Sounds = {
     Click = "rbxasset://sounds/click.wav",
@@ -2332,7 +2413,7 @@ function AYXDiscordUILibrary:Window(text)
 					TweenService:Create(
 						Server,
 						TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-						{BackgroundColor3 = Color3.fromRGB(114, 137, 228)}
+						{BackgroundColor3 = HoverColors.ServerHover}
 					):Play()
 					TweenService:Create(
 						ServerBtnCorner,
@@ -2356,7 +2437,7 @@ function AYXDiscordUILibrary:Window(text)
 					TweenService:Create(
 						Server,
 						TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-						{BackgroundColor3 = Color3.fromRGB(47, 49, 54)}
+						{BackgroundColor3 = HoverColors.ServerNormal}
 					):Play()
 					TweenService:Create(
 						ServerBtnCorner,
@@ -2388,12 +2469,12 @@ function AYXDiscordUILibrary:Window(text)
 						TweenService:Create(
 							v,
 							TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-							{BackgroundColor3 = Color3.fromRGB(47, 49, 54)}
+							{BackgroundColor3 = HoverColors.ServerNormal}
 						):Play()
 						TweenService:Create(
 							Server,
 							TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-							{BackgroundColor3 = Color3.fromRGB(114, 137, 228)}
+							{BackgroundColor3 = HoverColors.ServerHover}
 						):Play()
 						TweenService:Create(
 							v.ServerCorner,
@@ -2434,7 +2515,7 @@ function AYXDiscordUILibrary:Window(text)
 			TweenService:Create(
 				Server,
 				TweenInfo.new(.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-				{BackgroundColor3 = Color3.fromRGB(114, 137, 228)}
+				{BackgroundColor3 = HoverColors.ServerHover}
 			):Play()
 			TweenService:Create(
 				ServerBtnCorner,
@@ -2527,14 +2608,14 @@ function AYXDiscordUILibrary:Window(text)
 			
 			ChannelBtn.MouseEnter:Connect(function()
 				if currentchanneltoggled ~= ChannelBtn.Name then
-				ChannelBtn.BackgroundColor3 = Color3.fromRGB(52,55,60)
+				ChannelBtn.BackgroundColor3 = HoverColors.ChannelHover
 					ChannelBtnTitle.TextColor3 = Color3.fromRGB(220,221,222)
 				end
 			end)
 			
 			ChannelBtn.MouseLeave:Connect(function()
 				if currentchanneltoggled ~= ChannelBtn.Name then
-				ChannelBtn.BackgroundColor3 = Color3.fromRGB(47, 49, 54)
+				ChannelBtn.BackgroundColor3 = HoverColors.ChannelNormal
 				ChannelBtnTitle.TextColor3 = Color3.fromRGB(114, 118, 125)
 				end
 			end)
@@ -2574,7 +2655,7 @@ function AYXDiscordUILibrary:Window(text)
 
 				Button.Name = "Button"
 				Button.Parent = ChannelHolder
-				Button.BackgroundColor3 = Color3.fromRGB(114, 137, 228)
+				Button.BackgroundColor3 = Config.AccentColor
 				Button.Size = UDim2.new(0, 401, 0, 30)
 				Button.AutoButtonColor = false
 				Button.Font = Enum.Font.Gotham
@@ -2591,7 +2672,7 @@ function AYXDiscordUILibrary:Window(text)
 					TweenService:Create(
 						Button,
 						TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-						{BackgroundColor3 = Color3.fromRGB(103,123,196)}
+						{BackgroundColor3 = HoverColors.ButtonHover}
 					):Play()
 					if Config.EnableGlow then
 						CreateGlow(Button, Config.AccentColor)
@@ -2613,7 +2694,7 @@ function AYXDiscordUILibrary:Window(text)
 					TweenService:Create(
 						Button,
 						TweenInfo.new(Config.AnimationSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-						{BackgroundColor3 = Color3.fromRGB(114, 137, 228)}
+						{BackgroundColor3 = HoverColors.ButtonNormal}
 					):Play()
 					local glow = Button:FindFirstChild("Glow")
 					if glow then
@@ -3968,6 +4049,9 @@ end
 			end
 		end
 		
+		-- Update hover effects with new theme colors
+		UpdateAllHoverEffects()
+		
 		print("AYX Discord UI: Theme applied successfully")
 	end
 	
@@ -3988,5 +4072,8 @@ end
 		
 		return AYXDiscordUILibrary:Notify(title, desc, button, notifType, duration)
 	end
+	
+	-- Initialize hover colors
+	UpdateHoverColors()
 	
 	return AYXDiscordUILibrary
