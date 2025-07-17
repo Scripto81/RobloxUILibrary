@@ -49,15 +49,15 @@ end
 local function createImageButton(parent, properties)
     local imageButton = Instance.new("ImageButton")
     local validProperties = {
-        "Name", "BackgroundColor3", "BackgroundTransparency", "BorderColor3", "BorderSizePixel",
-        "Position", "Size", "AnchorPoint", "Rotation", "LayoutOrder", "ZIndex",
-        "Visible", "Active", "Draggable", "AutoButtonColor", "Image", "ImageColor3",
-        "ImageRectOffset", "ImageRectSize", "ImageTransparency", "ScaleType", "SliceCenter",
-        "SliceScale", "TileSize", "HoverImage", "PressedImage", "SelectedImage"
+        Name = true, BackgroundColor3 = true, BackgroundTransparency = true, BorderColor3 = true, BorderSizePixel = true,
+        Position = true, Size = true, AnchorPoint = true, Rotation = true, LayoutOrder = true, ZIndex = true,
+        Visible = true, Active = true, Draggable = true, AutoButtonColor = true, Image = true, ImageColor3 = true,
+        ImageRectOffset = true, ImageRectSize = true, ImageTransparency = true, ScaleType = true, SliceCenter = true,
+        SliceScale = true, TileSize = true, HoverImage = true, PressedImage = true, SelectedImage = true
     }
     
     for key, value in pairs(properties) do
-        if table.find(validProperties, key) then
+        if validProperties[key] then
             imageButton[key] = value
         end
     end
