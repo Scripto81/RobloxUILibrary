@@ -224,10 +224,6 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         BackgroundTransparency = 0,
         Position = UDim2.new(0.959063113, 0, -0.0169996787, 0),
         Size = UDim2.new(0, 28, 0, 22),
-        Font = Enum.Font.Gotham,
-        Text = "",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
         BorderSizePixel = 0,
         AutoButtonColor = false
     })
@@ -251,10 +247,6 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         BackgroundTransparency = 0,
         Position = UDim2.new(0.917947114, 0, -0.0169996787, 0),
         Size = UDim2.new(0, 28, 0, 22),
-        Font = Enum.Font.Gotham,
-        Text = "",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
         BorderSizePixel = 0,
         AutoButtonColor = false
     })
