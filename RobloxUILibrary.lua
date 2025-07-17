@@ -1,5 +1,5 @@
-local RayfieldStyleUILibrary = {}
-RayfieldStyleUILibrary.__index = RayfieldStyleUILibrary
+local DiscordStyleUILibrary = {}
+DiscordStyleUILibrary.__index = DiscordStyleUILibrary
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -13,8 +13,9 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 local function createScreenGui()
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "RayfieldStyleUILibrary"
+    screenGui.Name = "DiscordStyleUILibrary"
     screenGui.Parent = CoreGui
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     return screenGui
 end
 
@@ -81,15 +82,6 @@ local function createUIStroke(parent, properties)
     return uiStroke
 end
 
-local function createUIGradient(parent, properties)
-    local uiGradient = Instance.new("UIGradient")
-    for key, value in pairs(properties) do
-        uiGradient[key] = value
-    end
-    uiGradient.Parent = parent
-    return uiGradient
-end
-
 local function createUIPadding(parent, properties)
     local uiPadding = Instance.new("UIPadding")
     for key, value in pairs(properties) do
@@ -99,13 +91,13 @@ local function createUIPadding(parent, properties)
     return uiPadding
 end
 
-local function createUISizeConstraint(parent, properties)
-    local uiSizeConstraint = Instance.new("UISizeConstraint")
+local function createUIListLayout(parent, properties)
+    local uiListLayout = Instance.new("UIListLayout")
     for key, value in pairs(properties) do
-        uiSizeConstraint[key] = value
+        uiListLayout[key] = value
     end
-    uiSizeConstraint.Parent = parent
-    return uiSizeConstraint
+    uiListLayout.Parent = parent
+    return uiListLayout
 end
 
 local function tween(instance, properties, duration, easingStyle, easingDirection)
@@ -115,115 +107,379 @@ local function tween(instance, properties, duration, easingStyle, easingDirectio
     return tween
 end
 
-function RayfieldStyleUILibrary.new()
-    local self = setmetatable({}, RayfieldStyleUILibrary)
+local function makeDraggable(topbarobject, object)
+    local Dragging = nil
+    local DragInput = nil
+    local DragStart = nil
+    local StartPosition = nil
+    
+    local function Update(input)
+        local Delta = input.Position - DragStart
+        local pos = UDim2.new(
+            StartPosition.X.Scale,
+            StartPosition.X.Offset + Delta.X,
+            StartPosition.Y.Scale,
+            StartPosition.Y.Offset + Delta.Y
+        )
+        object.Position = pos
+    end
+    
+    topbarobject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            Dragging = true
+            DragStart = input.Position
+            StartPosition = object.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    Dragging = false
+                end
+            end)
+        end
+    end)
+    
+    topbarobject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            DragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == DragInput and Dragging then
+            Update(input)
+        end
+    end)
+end
+
+function DiscordStyleUILibrary.new()
+    local self = setmetatable({}, DiscordStyleUILibrary)
     self.screenGui = createScreenGui()
     self.components = {}
     self.windows = {}
     self.theme = {
-        primary = Color3.fromRGB(25, 25, 35),
-        secondary = Color3.fromRGB(35, 35, 45),
-        accent = Color3.fromRGB(100, 150, 255),
+        primary = Color3.fromRGB(32, 34, 37),
+        secondary = Color3.fromRGB(41, 43, 47),
+        tertiary = Color3.fromRGB(54, 57, 63),
+        accent = Color3.fromRGB(114, 137, 228),
         text = Color3.fromRGB(255, 255, 255),
-        textSecondary = Color3.fromRGB(200, 200, 200),
-        border = Color3.fromRGB(50, 50, 60),
-        success = Color3.fromRGB(100, 200, 100),
-        warning = Color3.fromRGB(255, 200, 100),
-        error = Color3.fromRGB(255, 100, 100)
+        textSecondary = Color3.fromRGB(127, 131, 137),
+        textTertiary = Color3.fromRGB(99, 102, 109),
+        border = Color3.fromRGB(37, 40, 43),
+        success = Color3.fromRGB(87, 227, 137),
+        warning = Color3.fromRGB(255, 184, 108),
+        error = Color3.fromRGB(237, 66, 69)
     }
     return self
 end
 
-function RayfieldStyleUILibrary:createWindow(title, size, position)
-    local window = createFrame(self.screenGui, {
-        Size = size or UDim2.new(0, 450, 0, 550),
-        Position = position or UDim2.new(0.5, -225, 0.5, -275),
+function DiscordStyleUILibrary:createWindow(title, size, position)
+    local currentservertoggled = ""
+    local minimized = false
+    local settingsopened = false
+    
+    local MainFrame = createFrame(self.screenGui, {
+        Name = "MainFrame",
+        AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = self.theme.primary,
         BorderSizePixel = 0,
-        Active = true,
-        Draggable = true
+        ClipsDescendants = true,
+        Position = position or UDim2.new(0.5, 0, 0.5, 0),
+        Size = size or UDim2.new(0, 681, 0, 396)
     })
     
-    createUICorner(window, {CornerRadius = UDim.new(0, 10)})
-    createUIStroke(window, {Color = self.theme.border, Thickness = 1})
-    
-    local titleBar = createFrame(window, {
-        Size = UDim2.new(1, 0, 0, 35),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = self.theme.secondary,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(titleBar, {CornerRadius = UDim.new(0, 10)})
-    
-    local titleLabel = createTextLabel(titleBar, {
-        Size = UDim2.new(1, -70, 1, 0),
-        Position = UDim2.new(0, 15, 0, 0),
+    local TopFrame = createFrame(MainFrame, {
+        Name = "TopFrame",
+        BackgroundColor3 = self.theme.primary,
         BackgroundTransparency = 1,
-        Text = title or "Window",
-        TextColor3 = self.theme.text,
-        TextScaled = true,
-        Font = Enum.Font.GothamBold,
+        BorderSizePixel = 0,
+        Position = UDim2.new(-0.000658480625, 0, 0, 0),
+        Size = UDim2.new(0, 681, 0, 22)
+    })
+    
+    local TopFrameHolder = createFrame(TopFrame, {
+        Name = "TopFrameHolder",
+        BackgroundColor3 = self.theme.primary,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(-0.000658480625, 0, 0, 0),
+        Size = UDim2.new(0, 681, 0, 22)
+    })
+    
+    local Title = createTextLabel(TopFrame, {
+        Name = "Title",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.0102790017, 0, 0, 0),
+        Size = UDim2.new(0, 192, 0, 23),
+        Font = Enum.Font.Gotham,
+        Text = title or "Discord UI",
+        TextColor3 = self.theme.textTertiary,
+        TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left
     })
     
-    local closeButton = createImageButton(titleBar, {
-        Size = UDim2.new(0, 25, 0, 25),
-        Position = UDim2.new(1, -30, 0.5, -12.5),
-        BackgroundColor3 = self.theme.error,
+    local CloseBtn = createImageButton(TopFrame, {
+        Name = "CloseBtn",
+        BackgroundColor3 = self.theme.primary,
+        BackgroundTransparency = 0,
+        Position = UDim2.new(0.959063113, 0, -0.0169996787, 0),
+        Size = UDim2.new(0, 28, 0, 22),
+        Font = Enum.Font.Gotham,
+        Text = "",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
         BorderSizePixel = 0,
-        Image = ""
+        AutoButtonColor = false
     })
     
-    createUICorner(closeButton, {CornerRadius = UDim.new(0, 6)})
+    local CloseIcon = createTextLabel(CloseBtn, {
+        Name = "CloseIcon",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.189182192, 0, 0.128935531, 0),
+        Size = UDim2.new(0, 17, 0, 17),
+        Font = Enum.Font.GothamBold,
+        Text = "×",
+        TextColor3 = Color3.fromRGB(220, 221, 222),
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Center
+    })
     
-    local minimizeButton = createImageButton(titleBar, {
-        Size = UDim2.new(0, 25, 0, 25),
-        Position = UDim2.new(1, -60, 0.5, -12.5),
-        BackgroundColor3 = self.theme.warning,
+    local MinimizeBtn = createImageButton(TopFrame, {
+        Name = "MinimizeButton",
+        BackgroundColor3 = self.theme.primary,
+        BackgroundTransparency = 0,
+        Position = UDim2.new(0.917947114, 0, -0.0169996787, 0),
+        Size = UDim2.new(0, 28, 0, 22),
+        Font = Enum.Font.Gotham,
+        Text = "",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
         BorderSizePixel = 0,
-        Image = ""
+        AutoButtonColor = false
     })
     
-    createUICorner(minimizeButton, {CornerRadius = UDim.new(0, 6)})
-    
-    local contentFrame = createFrame(window, {
-        Size = UDim2.new(1, 0, 1, -35),
-        Position = UDim2.new(0, 0, 0, 35),
-        BackgroundTransparency = 1
+    local MinimizeIcon = createTextLabel(MinimizeBtn, {
+        Name = "MinimizeLabel",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.189182192, 0, 0.128935531, 0),
+        Size = UDim2.new(0, 17, 0, 17),
+        Font = Enum.Font.GothamBold,
+        Text = "−",
+        TextColor3 = Color3.fromRGB(220, 221, 222),
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Center
     })
     
-    createUIPadding(contentFrame, {
-        PaddingLeft = UDim.new(0, 15),
-        PaddingRight = UDim.new(0, 15),
-        PaddingTop = UDim.new(0, 15),
-        PaddingBottom = UDim.new(0, 15)
+    local ServersHolder = createFrame(TopFrameHolder, {
+        Name = "ServersHolder"
     })
     
-    local isMinimized = false
+    local Userpad = createFrame(TopFrameHolder, {
+        Name = "Userpad",
+        BackgroundColor3 = self.theme.secondary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.106243297, 0, 15.9807148, 0),
+        Size = UDim2.new(0, 179, 0, 43)
+    })
     
-    closeButton.MouseButton1Click:Connect(function()
-        window:Destroy()
+    local UserIcon = createFrame(Userpad, {
+        Name = "UserIcon",
+        BackgroundColor3 = Color3.fromRGB(31, 33, 36),
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.0340000018, 0, 0.123456791, 0),
+        Size = UDim2.new(0, 32, 0, 32)
+    })
+    
+    createUICorner(UserIcon, {CornerRadius = UDim.new(0, 16)})
+    
+    local UserImage = createTextLabel(UserIcon, {
+        Name = "UserImage",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 32, 0, 32),
+        Font = Enum.Font.GothamBold,
+        Text = "U",
+        TextColor3 = self.theme.text,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Center
+    })
+    
+    local UserName = createTextLabel(Userpad, {
+        Name = "UserName",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.245809972, 0, 0.291666657, 0),
+        Size = UDim2.new(0, 1, 0, 1),
+        Font = Enum.Font.Gotham,
+        Text = player.Name,
+        TextColor3 = self.theme.text,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local UserTag = createTextLabel(Userpad, {
+        Name = "UserTag",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.245809972, 0, 0.583333313, 0),
+        Size = UDim2.new(0, 1, 0, 1),
+        Font = Enum.Font.Gotham,
+        Text = "#" .. tostring(math.random(1000, 9999)),
+        TextColor3 = self.theme.textSecondary,
+        TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local ServersHoldFrame = createFrame(TopFrameHolder, {
+        Name = "ServersHoldFrame",
+        BackgroundColor3 = self.theme.secondary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.106243297, 0, 1.01886797, 0),
+        Size = UDim2.new(0, 179, 0, 296)
+    })
+    
+    local ServersHold = createScrollingFrame(ServersHoldFrame, {
+        Name = "ServersHold",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 179, 0, 296),
+        ScrollBarThickness = 4,
+        CanvasSize = UDim2.new(0, 0, 0, 0)
+    })
+    
+    createUIListLayout(ServersHold, {
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 0, 0, 0)
+    })
+    
+    createUIPadding(ServersHold, {
+        PaddingTop = UDim.new(0, 5),
+        PaddingBottom = UDim.new(0, 5)
+    })
+    
+    local ChannelHolder = createFrame(MainFrame, {
+        Name = "ChannelHolder",
+        BackgroundColor3 = self.theme.secondary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.262848735, 0, 0, 0),
+        Size = UDim2.new(0, 179, 0, 396)
+    })
+    
+    local ChannelHolderTitle = createTextLabel(ChannelHolder, {
+        Name = "ChannelHolderTitle",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 179, 0, 30),
+        Font = Enum.Font.GothamBold,
+        Text = "CHANNELS",
+        TextColor3 = self.theme.textSecondary,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Center
+    })
+    
+    local ChannelHolderList = createScrollingFrame(ChannelHolder, {
+        Name = "ChannelHolderList",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 30),
+        Size = UDim2.new(0, 179, 0, 366),
+        ScrollBarThickness = 4,
+        CanvasSize = UDim2.new(0, 0, 0, 0)
+    })
+    
+    createUIListLayout(ChannelHolderList, {
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 0, 0, 0)
+    })
+    
+    createUIPadding(ChannelHolderList, {
+        PaddingTop = UDim.new(0, 5),
+        PaddingBottom = UDim.new(0, 5)
+    })
+    
+    local ContentHolder = createFrame(MainFrame, {
+        Name = "ContentHolder",
+        BackgroundColor3 = self.theme.tertiary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.441997081, 0, 0, 0),
+        Size = UDim2.new(0, 378, 0, 396)
+    })
+    
+    local ContentHolderTitle = createTextLabel(ContentHolder, {
+        Name = "ContentHolderTitle",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 378, 0, 30),
+        Font = Enum.Font.GothamBold,
+        Text = "CONTENT",
+        TextColor3 = self.theme.text,
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Center
+    })
+    
+    local ContentHolderList = createScrollingFrame(ContentHolder, {
+        Name = "ContentHolderList",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 30),
+        Size = UDim2.new(0, 378, 0, 366),
+        ScrollBarThickness = 4,
+        CanvasSize = UDim2.new(0, 0, 0, 0)
+    })
+    
+    createUIListLayout(ContentHolderList, {
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 0, 0, 0)
+    })
+    
+    createUIPadding(ContentHolderList, {
+        PaddingTop = UDim.new(0, 5),
+        PaddingBottom = UDim.new(0, 5)
+    })
+    
+    -- Make window draggable
+    makeDraggable(TopFrame, MainFrame)
+    
+    -- Close button functionality
+    CloseBtn.MouseButton1Click:Connect(function()
+        MainFrame:Destroy()
     end)
     
-    minimizeButton.MouseButton1Click:Connect(function()
-        isMinimized = not isMinimized
-        if isMinimized then
-            tween(window, {Size = UDim2.new(0, 450, 0, 35)})
-            contentFrame.Visible = false
+    -- Minimize button functionality
+    MinimizeBtn.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        if minimized then
+            tween(MainFrame, {Size = UDim2.new(0, 681, 0, 22)})
+            ServersHoldFrame.Visible = false
+            ChannelHolder.Visible = false
+            ContentHolder.Visible = false
         else
-            tween(window, {Size = size or UDim2.new(0, 450, 0, 550)})
-            contentFrame.Visible = true
+            tween(MainFrame, {Size = size or UDim2.new(0, 681, 0, 396)})
+            ServersHoldFrame.Visible = true
+            ChannelHolder.Visible = true
+            ContentHolder.Visible = true
         end
     end)
     
     local windowObj = {
-        window = window,
-        titleBar = titleBar,
-        contentFrame = contentFrame,
-        closeButton = closeButton,
-        minimizeButton = minimizeButton,
-        isMinimized = isMinimized
+        mainFrame = MainFrame,
+        topFrame = TopFrame,
+        serversHolder = ServersHolder,
+        channelHolder = ChannelHolderList,
+        contentHolder = ContentHolderList,
+        minimized = minimized
     }
     
     table.insert(self.components, windowObj)
@@ -231,274 +487,208 @@ function RayfieldStyleUILibrary:createWindow(title, size, position)
     return windowObj
 end
 
-function RayfieldStyleUILibrary:createTabSystem(parent, tabs)
-    local tabSystem = createFrame(parent, {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1
+function DiscordStyleUILibrary:createServer(window, name, icon)
+    local ServerFrame = createFrame(window.serversHolder, {
+        Name = name,
+        BackgroundColor3 = self.theme.tertiary,
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 47, 0, 47)
     })
     
-    local tabButtons = createFrame(tabSystem, {
-        Size = UDim2.new(1, 0, 0, 40),
+    createUICorner(ServerFrame, {CornerRadius = UDim.new(0, 23.5)})
+    
+    local ServerIcon = createTextLabel(ServerFrame, {
+        Name = "ServerIcon",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = self.theme.secondary,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(tabButtons, {CornerRadius = UDim.new(0, 8)})
-    
-    local tabContent = createFrame(tabSystem, {
-        Size = UDim2.new(1, 0, 1, -50),
-        Position = UDim2.new(0, 0, 0, 50),
-        BackgroundTransparency = 1
-    })
-    
-    local tabPages = {}
-    local activeTab = nil
-    
-    for i, tabName in pairs(tabs) do
-        local tabButton = createImageButton(tabButtons, {
-            Size = UDim2.new(1/#tabs, -5, 1, -5),
-            Position = UDim2.new((i-1)/#tabs, 0, 0, 0),
-            BackgroundColor3 = self.theme.primary,
-            BorderSizePixel = 0
-        })
-        
-        createUICorner(tabButton, {CornerRadius = UDim.new(0, 6)})
-        
-        local tabText = createTextLabel(tabButton, {
-            Size = UDim2.new(1, 0, 1, 0),
-            BackgroundTransparency = 1,
-            Text = tabName,
-            TextColor3 = self.theme.textSecondary,
-            TextScaled = true,
-            Font = Enum.Font.Gotham,
-            TextXAlignment = Enum.TextXAlignment.Center
-        })
-        
-        local tabPage = createFrame(tabContent, {
-            Size = UDim2.new(1, 0, 1, 0),
-            Position = UDim2.new(0, 0, 0, 0),
-            BackgroundTransparency = 1,
-            Visible = i == 1
-        })
-        
-        tabPages[tabName] = {
-            button = tabButton,
-            page = tabPage,
-            text = tabText
-        }
-        
-        if i == 1 then
-            activeTab = tabName
-            tween(tabButton, {BackgroundColor3 = self.theme.accent})
-            tween(tabText, {TextColor3 = self.theme.text})
-        end
-        
-        tabButton.MouseButton1Click:Connect(function()
-            if activeTab ~= tabName then
-                -- Hide current tab
-                tabPages[activeTab].page.Visible = false
-                tween(tabPages[activeTab].button, {BackgroundColor3 = self.theme.primary})
-                tween(tabPages[activeTab].text, {TextColor3 = self.theme.textSecondary})
-                
-                -- Show new tab
-                tabPages[tabName].page.Visible = true
-                tween(tabPages[tabName].button, {BackgroundColor3 = self.theme.accent})
-                tween(tabPages[tabName].text, {TextColor3 = self.theme.text})
-                
-                activeTab = tabName
-            end
-        end)
-    end
-    
-    return {
-        frame = tabSystem,
-        pages = tabPages,
-        activeTab = activeTab
-    }
-end
-
-function RayfieldStyleUILibrary:createSection(parent, title, size)
-    local section = createFrame(parent, {
-        Size = size or UDim2.new(1, 0, 0, 0),
-        BackgroundColor3 = self.theme.secondary,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(section, {CornerRadius = UDim.new(0, 8)})
-    createUIStroke(section, {Color = self.theme.border, Thickness = 1})
-    
-    local sectionTitle = createTextLabel(section, {
-        Size = UDim2.new(1, -20, 0, 25),
-        Position = UDim2.new(0, 10, 0, 5),
-        BackgroundTransparency = 1,
-        Text = title or "Section",
-        TextColor3 = self.theme.text,
-        TextScaled = true,
+        Size = UDim2.new(0, 47, 0, 47),
         Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-    
-    local sectionContent = createFrame(section, {
-        Size = UDim2.new(1, -20, 1, -35),
-        Position = UDim2.new(0, 10, 0, 30),
-        BackgroundTransparency = 1
-    })
-    
-    createUIPadding(sectionContent, {
-        PaddingTop = UDim2.new(0, 5),
-        PaddingBottom = UDim2.new(0, 5)
-    })
-    
-    return {
-        frame = section,
-        content = sectionContent,
-        title = sectionTitle
-    }
-end
-
-function RayfieldStyleUILibrary:createButton(parent, text, size, callback, style)
-    style = style or "primary"
-    
-    local buttonColors = {
-        primary = {bg = self.theme.accent, hover = Color3.fromRGB(120, 170, 255)},
-        secondary = {bg = self.theme.secondary, hover = Color3.fromRGB(45, 45, 55)},
-        success = {bg = self.theme.success, hover = Color3.fromRGB(120, 220, 120)},
-        warning = {bg = self.theme.warning, hover = Color3.fromRGB(255, 220, 120)},
-        error = {bg = self.theme.error, hover = Color3.fromRGB(255, 120, 120)}
-    }
-    
-    local button = createImageButton(parent, {
-        Size = size or UDim2.new(1, 0, 0, 35),
-        BackgroundColor3 = buttonColors[style].bg,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(button, {CornerRadius = UDim.new(0, 8)})
-    createUIStroke(button, {Color = self.theme.border, Thickness = 1})
-    
-    local buttonText = createTextLabel(button, {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = text or "Button",
+        Text = icon or string.sub(name, 1, 1):upper(),
         TextColor3 = self.theme.text,
-        TextScaled = true,
-        Font = Enum.Font.GothamBold,
+        TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Center
     })
     
-    local isHovered = false
-    
-    button.MouseEnter:Connect(function()
-        isHovered = true
-        tween(button, {BackgroundColor3 = buttonColors[style].hover})
-        tween(button, {Size = size and (size + UDim2.new(0, 2, 0, 2)) or UDim2.new(1, 2, 0, 37)})
+    ServerFrame.MouseButton1Click:Connect(function()
+        -- Handle server selection
+        for _, server in pairs(window.serversHolder:GetChildren()) do
+            if server:IsA("Frame") then
+                tween(server, {BackgroundColor3 = self.theme.tertiary})
+            end
+        end
+        tween(ServerFrame, {BackgroundColor3 = self.theme.accent})
     end)
     
-    button.MouseLeave:Connect(function()
-        isHovered = false
-        tween(button, {BackgroundColor3 = buttonColors[style].bg})
-        tween(button, {Size = size or UDim2.new(1, 0, 0, 35)})
-    end)
+    return ServerFrame
+end
+
+function DiscordStyleUILibrary:createChannel(window, name, callback)
+    local ChannelFrame = createFrame(window.channelHolder, {
+        Name = name,
+        BackgroundColor3 = self.theme.tertiary,
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 161, 0, 30)
+    })
     
-    button.MouseButton1Click:Connect(function()
+    createUICorner(ChannelFrame, {CornerRadius = UDim.new(0, 4)})
+    
+    local ChannelName = createTextLabel(ChannelFrame, {
+        Name = "ChannelName",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 5, 0, 0),
+        Size = UDim2.new(0, 151, 0, 30),
+        Font = Enum.Font.Gotham,
+        Text = "# " .. name,
+        TextColor3 = self.theme.textSecondary,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    ChannelFrame.MouseButton1Click:Connect(function()
         if callback then
             callback()
         end
     end)
     
-    return button
+    return ChannelFrame
 end
 
-function RayfieldStyleUILibrary:createTextBox(parent, placeholder, size, callback)
-    local textBox = createTextBox(parent, {
-        Size = size or UDim2.new(1, 0, 0, 35),
-        BackgroundColor3 = self.theme.primary,
+function DiscordStyleUILibrary:createButton(parent, text, callback)
+    local ButtonFrame = createFrame(parent, {
+        Name = "Button",
+        BackgroundColor3 = self.theme.tertiary,
         BorderSizePixel = 0,
-        Text = "",
-        PlaceholderText = placeholder or "Enter text...",
-        TextColor3 = self.theme.text,
-        PlaceholderColor3 = self.theme.textSecondary,
-        TextScaled = true,
-        Font = Enum.Font.Gotham,
-        ClearTextOnFocus = false
+        Size = UDim2.new(0, 358, 0, 30)
     })
     
-    createUICorner(textBox, {CornerRadius = UDim.new(0, 8)})
-    createUIStroke(textBox, {Color = self.theme.border, Thickness = 1})
+    createUICorner(ButtonFrame, {CornerRadius = UDim.new(0, 4)})
     
-    textBox.Focused:Connect(function()
-        tween(textBox.UIStroke, {Color = self.theme.accent, Thickness = 2})
-    end)
+    local ButtonText = createTextLabel(ButtonFrame, {
+        Name = "ButtonText",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 5, 0, 0),
+        Size = UDim2.new(0, 348, 0, 30),
+        Font = Enum.Font.Gotham,
+        Text = text,
+        TextColor3 = self.theme.text,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
     
-    textBox.FocusLost:Connect(function()
-        tween(textBox.UIStroke, {Color = self.theme.border, Thickness = 1})
+    ButtonFrame.MouseButton1Click:Connect(function()
         if callback then
-            callback(textBox.Text)
+            callback()
         end
     end)
     
-    return textBox
+    return ButtonFrame
 end
 
-function RayfieldStyleUILibrary:createSlider(parent, min, max, default, callback, label)
-    local sliderFrame = createFrame(parent, {
-        Size = UDim2.new(1, 0, 0, 50),
-        BackgroundTransparency = 1
+function DiscordStyleUILibrary:createToggle(parent, text, default, callback)
+    local ToggleFrame = createFrame(parent, {
+        Name = "Toggle",
+        BackgroundColor3 = self.theme.tertiary,
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 358, 0, 30)
     })
     
-    if label then
-        local labelText = createTextLabel(sliderFrame, {
-            Size = UDim2.new(1, 0, 0, 20),
-            Position = UDim2.new(0, 0, 0, 0),
-            BackgroundTransparency = 1,
-            Text = label,
-            TextColor3 = self.theme.text,
-            TextScaled = true,
-            Font = Enum.Font.Gotham,
-            TextXAlignment = Enum.TextXAlignment.Left
-        })
-    end
+    createUICorner(ToggleFrame, {CornerRadius = UDim.new(0, 4)})
     
-    local sliderTrack = createFrame(sliderFrame, {
-        Size = UDim2.new(1, 0, 0, 6),
-        Position = UDim2.new(0, 0, 0, label and 25 or 0),
-        BackgroundColor3 = self.theme.primary,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(sliderTrack, {CornerRadius = UDim.new(0, 3)})
-    createUIStroke(sliderTrack, {Color = self.theme.border, Thickness = 1})
-    
-    local sliderFill = createFrame(sliderTrack, {
-        Size = UDim2.new(0, 0, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = self.theme.accent,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(sliderFill, {CornerRadius = UDim.new(0, 3)})
-    
-    local sliderButton = createFrame(sliderFrame, {
-        Size = UDim2.new(0, 18, 0, 18),
-        Position = UDim2.new(0, 0, 0, label and 25 or 0),
-        BackgroundColor3 = self.theme.text,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(sliderButton, {CornerRadius = UDim.new(0, 9)})
-    createUIStroke(sliderButton, {Color = self.theme.accent, Thickness = 2})
-    
-    local valueLabel = createTextLabel(sliderFrame, {
-        Size = UDim2.new(0, 60, 0, 20),
-        Position = UDim2.new(1, -65, 0, label and 25 or 0),
+    local ToggleText = createTextLabel(ToggleFrame, {
+        Name = "ToggleText",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
-        Text = tostring(default or min),
-        TextColor3 = self.theme.text,
-        TextScaled = true,
+        Position = UDim2.new(0, 5, 0, 0),
+        Size = UDim2.new(0, 200, 0, 30),
         Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Right
+        Text = text,
+        TextColor3 = self.theme.text,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left
     })
+    
+    local ToggleButton = createFrame(ToggleFrame, {
+        Name = "ToggleButton",
+        BackgroundColor3 = default and self.theme.accent or self.theme.tertiary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, -25, 0.5, -8),
+        Size = UDim2.new(0, 16, 0, 16)
+    })
+    
+    createUICorner(ToggleButton, {CornerRadius = UDim.new(0, 8)})
+    
+    local isToggled = default or false
+    
+    ToggleFrame.MouseButton1Click:Connect(function()
+        isToggled = not isToggled
+        if isToggled then
+            tween(ToggleButton, {BackgroundColor3 = self.theme.accent})
+        else
+            tween(ToggleButton, {BackgroundColor3 = self.theme.tertiary})
+        end
+        if callback then
+            callback(isToggled)
+        end
+    end)
+    
+    return ToggleFrame
+end
+
+function DiscordStyleUILibrary:createSlider(parent, text, min, max, default, callback)
+    local SliderFrame = createFrame(parent, {
+        Name = "Slider",
+        BackgroundColor3 = self.theme.tertiary,
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 358, 0, 50)
+    })
+    
+    createUICorner(SliderFrame, {CornerRadius = UDim.new(0, 4)})
+    
+    local SliderText = createTextLabel(SliderFrame, {
+        Name = "SliderText",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 5, 0, 0),
+        Size = UDim2.new(0, 200, 0, 20),
+        Font = Enum.Font.Gotham,
+        Text = text,
+        TextColor3 = self.theme.text,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local SliderTrack = createFrame(SliderFrame, {
+        Name = "SliderTrack",
+        BackgroundColor3 = self.theme.primary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 5, 0, 25),
+        Size = UDim2.new(0, 348, 0, 4)
+    })
+    
+    createUICorner(SliderTrack, {CornerRadius = UDim.new(0, 2)})
+    
+    local SliderFill = createFrame(SliderTrack, {
+        Name = "SliderFill",
+        BackgroundColor3 = self.theme.accent,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 0, 1, 0)
+    })
+    
+    createUICorner(SliderFill, {CornerRadius = UDim.new(0, 2)})
+    
+    local SliderButton = createFrame(SliderFrame, {
+        Name = "SliderButton",
+        BackgroundColor3 = self.theme.text,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 5, 0, 25),
+        Size = UDim2.new(0, 12, 0, 12)
+    })
+    
+    createUICorner(SliderButton, {CornerRadius = UDim.new(0, 6)})
     
     local currentValue = default or min
     local isDragging = false
@@ -506,16 +696,15 @@ function RayfieldStyleUILibrary:createSlider(parent, min, max, default, callback
     local function updateSlider(value)
         currentValue = math.clamp(value, min, max)
         local percentage = (currentValue - min) / (max - min)
-        sliderFill.Size = UDim2.new(percentage, 0, 1, 0)
-        sliderButton.Position = UDim2.new(percentage, -9, 0, label and 25 or 0)
-        valueLabel.Text = tostring(math.floor(currentValue))
+        SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
+        SliderButton.Position = UDim2.new(percentage, -6, 0, 25)
         
         if callback then
             callback(currentValue)
         end
     end
     
-    sliderButton.MouseButton1Down:Connect(function()
+    SliderButton.MouseButton1Down:Connect(function()
         isDragging = true
     end)
     
@@ -528,8 +717,8 @@ function RayfieldStyleUILibrary:createSlider(parent, min, max, default, callback
     RunService.RenderStepped:Connect(function()
         if isDragging then
             local mousePos = UserInputService:GetMouseLocation()
-            local sliderPos = sliderTrack.AbsolutePosition
-            local sliderSize = sliderTrack.AbsoluteSize
+            local sliderPos = SliderTrack.AbsolutePosition
+            local sliderSize = SliderTrack.AbsoluteSize
             local relativeX = (mousePos.X - sliderPos.X) / sliderSize.X
             local percentage = math.clamp(relativeX, 0, 1)
             local value = min + (max - min) * percentage
@@ -539,268 +728,60 @@ function RayfieldStyleUILibrary:createSlider(parent, min, max, default, callback
     
     updateSlider(currentValue)
     
-    return {
-        frame = sliderFrame,
-        setValue = updateSlider,
-        getValue = function() return currentValue end
-    }
+    return SliderFrame
 end
 
-function RayfieldStyleUILibrary:createToggle(parent, text, default, callback)
-    local toggleFrame = createFrame(parent, {
-        Size = UDim2.new(1, 0, 0, 30),
-        BackgroundTransparency = 1
-    })
-    
-    local toggleButton = createImageButton(toggleFrame, {
-        Size = UDim2.new(0, 45, 0, 25),
-        Position = UDim2.new(1, -50, 0.5, -12.5),
-        BackgroundColor3 = self.theme.primary,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(toggleButton, {CornerRadius = UDim.new(0, 12.5)})
-    createUIStroke(toggleButton, {Color = self.theme.border, Thickness = 1})
-    
-    local toggleCircle = createFrame(toggleButton, {
-        Size = UDim2.new(0, 19, 0, 19),
-        Position = UDim2.new(0, 3, 0.5, -9.5),
-        BackgroundColor3 = self.theme.text,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(toggleCircle, {CornerRadius = UDim.new(0, 9.5)})
-    
-    local toggleText = createTextLabel(toggleFrame, {
-        Size = UDim2.new(1, -60, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundTransparency = 1,
-        Text = text or "Toggle",
-        TextColor3 = self.theme.text,
-        TextScaled = true,
-        Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-    
-    local isToggled = default or false
-    
-    local function updateToggle()
-        if isToggled then
-            tween(toggleButton, {BackgroundColor3 = self.theme.accent})
-            tween(toggleCircle, {Position = UDim2.new(1, -22, 0.5, -9.5)})
-        else
-            tween(toggleButton, {BackgroundColor3 = self.theme.primary})
-            tween(toggleCircle, {Position = UDim2.new(0, 3, 0.5, -9.5)})
-        end
-    end
-    
-    toggleButton.MouseButton1Click:Connect(function()
-        isToggled = not isToggled
-        updateToggle()
-        if callback then
-            callback(isToggled)
-        end
-    end)
-    
-    updateToggle()
-    
-    return {
-        frame = toggleFrame,
-        setValue = function(value)
-            isToggled = value
-            updateToggle()
-        end,
-        getValue = function() return isToggled end
-    }
-end
-
-function RayfieldStyleUILibrary:createDropdown(parent, options, default, callback)
-    local dropdownFrame = createFrame(parent, {
-        Size = UDim2.new(1, 0, 0, 35),
-        BackgroundColor3 = self.theme.primary,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(dropdownFrame, {CornerRadius = UDim.new(0, 8)})
-    createUIStroke(dropdownFrame, {Color = self.theme.border, Thickness = 1})
-    
-    local dropdownText = createTextLabel(dropdownFrame, {
-        Size = UDim2.new(1, -35, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = default or options[1] or "Select option",
-        TextColor3 = self.theme.text,
-        TextScaled = true,
-        Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-    
-    local dropdownArrow = createTextLabel(dropdownFrame, {
-        Size = UDim2.new(0, 25, 1, 0),
-        Position = UDim2.new(1, -30, 0, 0),
-        BackgroundTransparency = 1,
-        Text = "▼",
-        TextColor3 = self.theme.text,
-        TextScaled = true,
-        Font = Enum.Font.Gotham
-    })
-    
-    local dropdownList = createFrame(dropdownFrame, {
-        Size = UDim2.new(1, 0, 0, 0),
-        Position = UDim2.new(0, 0, 1, 5),
-        BackgroundColor3 = self.theme.secondary,
+function DiscordStyleUILibrary:createTextBox(parent, text, placeholder, callback)
+    local TextBoxFrame = createFrame(parent, {
+        Name = "TextBox",
+        BackgroundColor3 = self.theme.tertiary,
         BorderSizePixel = 0,
-        Visible = false
+        Size = UDim2.new(0, 358, 0, 30)
     })
     
-    createUICorner(dropdownList, {CornerRadius = UDim.new(0, 8)})
-    createUIStroke(dropdownList, {Color = self.theme.border, Thickness = 1})
+    createUICorner(TextBoxFrame, {CornerRadius = UDim.new(0, 4)})
     
-    local isOpen = false
-    local selectedOption = default or options[1]
-    
-    local function updateDropdown()
-        dropdownText.Text = selectedOption
-        if callback then
-            callback(selectedOption)
-        end
-    end
-    
-    local function toggleDropdown()
-        isOpen = not isOpen
-        if isOpen then
-            dropdownList.Visible = true
-            dropdownList.Size = UDim2.new(1, 0, 0, #options * 30 + 10)
-            tween(dropdownArrow, {Rotation = 180})
-        else
-            dropdownList.Size = UDim2.new(1, 0, 0, 0)
-            tween(dropdownArrow, {Rotation = 0})
-            wait(0.2)
-            dropdownList.Visible = false
-        end
-    end
-    
-    for i, option in pairs(options) do
-        local optionButton = createImageButton(dropdownList, {
-            Size = UDim2.new(1, -10, 0, 30),
-            Position = UDim2.new(0, 5, 0, (i-1) * 30 + 5),
-            BackgroundColor3 = self.theme.primary,
-            BorderSizePixel = 0
-        })
-        
-        createUICorner(optionButton, {CornerRadius = UDim.new(0, 6)})
-        
-        local optionText = createTextLabel(optionButton, {
-            Size = UDim2.new(1, -10, 1, 0),
-            Position = UDim2.new(0, 5, 0, 0),
-            BackgroundTransparency = 1,
-            Text = option,
-            TextColor3 = self.theme.text,
-            TextScaled = true,
-            Font = Enum.Font.Gotham,
-            TextXAlignment = Enum.TextXAlignment.Left
-        })
-        
-        optionButton.MouseEnter:Connect(function()
-            tween(optionButton, {BackgroundColor3 = self.theme.accent})
-        end)
-        
-        optionButton.MouseLeave:Connect(function()
-            tween(optionButton, {BackgroundColor3 = self.theme.primary})
-        end)
-        
-        optionButton.MouseButton1Click:Connect(function()
-            selectedOption = option
-            updateDropdown()
-            toggleDropdown()
-        end)
-    end
-    
-    dropdownFrame.MouseButton1Click:Connect(toggleDropdown)
-    
-    updateDropdown()
-    
-    return {
-        frame = dropdownFrame,
-        setValue = function(value)
-            selectedOption = value
-            updateDropdown()
-        end,
-        getValue = function() return selectedOption end
-    }
-end
-
-function RayfieldStyleUILibrary:createNotification(title, message, duration, type)
-    type = type or "info"
-    
-    local notificationColors = {
-        info = {bg = self.theme.accent, border = self.theme.accent},
-        success = {bg = self.theme.success, border = self.theme.success},
-        warning = {bg = self.theme.warning, border = self.theme.warning},
-        error = {bg = self.theme.error, border = self.theme.error}
-    }
-    
-    local notification = createFrame(self.screenGui, {
-        Size = UDim2.new(0, 350, 0, 90),
-        Position = UDim2.new(1, -370, 0, 20),
-        BackgroundColor3 = notificationColors[type].bg,
-        BorderSizePixel = 0
-    })
-    
-    createUICorner(notification, {CornerRadius = UDim.new(0, 12)})
-    createUIStroke(notification, {Color = notificationColors[type].border, Thickness = 2})
-    
-    local titleLabel = createTextLabel(notification, {
-        Size = UDim2.new(1, -20, 0, 25),
-        Position = UDim2.new(0, 15, 0, 10),
+    local TextBoxTitle = createTextLabel(TextBoxFrame, {
+        Name = "TextBoxTitle",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
-        Text = title or "Notification",
-        TextColor3 = self.theme.text,
-        TextScaled = true,
-        Font = Enum.Font.GothamBold,
+        Position = UDim2.new(0, 5, 0, 0),
+        Size = UDim2.new(0, 200, 0, 15),
+        Font = Enum.Font.Gotham,
+        Text = text,
+        TextColor3 = self.theme.textSecondary,
+        TextSize = 10,
         TextXAlignment = Enum.TextXAlignment.Left
     })
     
-    local messageLabel = createTextLabel(notification, {
-        Size = UDim2.new(1, -20, 0, 40),
-        Position = UDim2.new(0, 15, 0, 35),
+    local TextBoxInput = createTextBox(TextBoxFrame, {
+        Name = "TextBoxInput",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
-        Text = message or "",
-        TextColor3 = self.theme.text,
-        TextScaled = true,
+        Position = UDim2.new(0, 5, 0, 15),
+        Size = UDim2.new(0, 348, 0, 15),
         Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextWrapped = true
-    })
-    
-    local closeButton = createImageButton(notification, {
-        Size = UDim2.new(0, 25, 0, 25),
-        Position = UDim2.new(1, -30, 0, 10),
-        BackgroundTransparency = 1,
-        Text = "×",
+        PlaceholderText = placeholder or "Enter text...",
+        PlaceholderColor3 = self.theme.textSecondary,
+        Text = "",
         TextColor3 = self.theme.text,
-        TextScaled = true,
-        Font = Enum.Font.GothamBold
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left
     })
     
-    closeButton.MouseButton1Click:Connect(function()
-        notification:Destroy()
+    TextBoxInput.FocusLost:Connect(function(enterPressed)
+        if enterPressed and callback then
+            callback(TextBoxInput.Text)
+        end
     end)
     
-    if duration then
-        spawn(function()
-            wait(duration)
-            notification:Destroy()
-        end)
-    end
-    
-    return notification
+    return TextBoxFrame
 end
 
-function RayfieldStyleUILibrary:destroy()
+function DiscordStyleUILibrary:destroy()
     if self.screenGui then
         self.screenGui:Destroy()
     end
 end
 
-return RayfieldStyleUILibrary 
+return DiscordStyleUILibrary 
