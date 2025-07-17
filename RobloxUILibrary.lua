@@ -157,17 +157,19 @@ function DiscordStyleUILibrary.new()
     self.components = {}
     self.windows = {}
     self.theme = {
-        primary = Color3.fromRGB(32, 34, 37),
-        secondary = Color3.fromRGB(41, 43, 47),
-        tertiary = Color3.fromRGB(54, 57, 63),
-        accent = Color3.fromRGB(114, 137, 228),
+        primary = Color3.fromRGB(47, 49, 54),
+        secondary = Color3.fromRGB(32, 34, 37),
+        tertiary = Color3.fromRGB(64, 68, 75),
+        accent = Color3.fromRGB(88, 101, 242),
         text = Color3.fromRGB(255, 255, 255),
-        textSecondary = Color3.fromRGB(127, 131, 137),
-        textTertiary = Color3.fromRGB(99, 102, 109),
-        border = Color3.fromRGB(37, 40, 43),
-        success = Color3.fromRGB(87, 227, 137),
+        textSecondary = Color3.fromRGB(185, 187, 190),
+        textTertiary = Color3.fromRGB(116, 127, 141),
+        border = Color3.fromRGB(47, 49, 54),
+        success = Color3.fromRGB(87, 242, 135),
         warning = Color3.fromRGB(255, 184, 108),
-        error = Color3.fromRGB(237, 66, 69)
+        error = Color3.fromRGB(237, 66, 69),
+        hover = Color3.fromRGB(64, 68, 75),
+        selected = Color3.fromRGB(88, 101, 242)
     }
     return self
 end
@@ -186,6 +188,9 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         Position = position or UDim2.new(0.5, 0, 0.5, 0),
         Size = size or UDim2.new(0, 681, 0, 396)
     })
+    
+    createUICorner(MainFrame, {CornerRadius = UDim.new(0, 8)})
+    createUIStroke(MainFrame, {Color = self.theme.border, Thickness = 1})
     
     local TopFrame = createFrame(MainFrame, {
         Name = "TopFrame",
@@ -267,22 +272,30 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
     })
     
     local ServersHolder = createFrame(TopFrameHolder, {
-        Name = "ServersHolder"
+        Name = "ServersHolder",
+        BackgroundColor3 = self.theme.secondary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 72, 0, 396)
     })
+    
+    createUICorner(ServersHolder, {CornerRadius = UDim.new(0, 8)})
     
     local Userpad = createFrame(TopFrameHolder, {
         Name = "Userpad",
         BackgroundColor3 = self.theme.secondary,
         BorderSizePixel = 0,
-        Position = UDim2.new(0.106243297, 0, 15.9807148, 0),
-        Size = UDim2.new(0, 179, 0, 43)
+        Position = UDim2.new(0, 0, 0.89, 0),
+        Size = UDim2.new(0, 72, 0, 43)
     })
+    
+    createUICorner(Userpad, {CornerRadius = UDim.new(0, 6)})
     
     local UserIcon = createFrame(Userpad, {
         Name = "UserIcon",
-        BackgroundColor3 = Color3.fromRGB(31, 33, 36),
+        BackgroundColor3 = self.theme.accent,
         BorderSizePixel = 0,
-        Position = UDim2.new(0.0340000018, 0, 0.123456791, 0),
+        Position = UDim2.new(0.5, -16, 0.5, -16),
         Size = UDim2.new(0, 32, 0, 32)
     })
     
@@ -295,9 +308,9 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         Position = UDim2.new(0, 0, 0, 0),
         Size = UDim2.new(0, 32, 0, 32),
         Font = Enum.Font.GothamBold,
-        Text = "U",
+        Text = string.sub(player.Name, 1, 1):upper(),
         TextColor3 = self.theme.text,
-        TextSize = 16,
+        TextSize = 14,
         TextXAlignment = Enum.TextXAlignment.Center
     })
     
@@ -305,43 +318,35 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         Name = "UserName",
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
-        Position = UDim2.new(0.245809972, 0, 0.291666657, 0),
-        Size = UDim2.new(0, 1, 0, 1),
-        Font = Enum.Font.Gotham,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 72, 0, 20),
+        Font = Enum.Font.GothamBold,
         Text = player.Name,
         TextColor3 = self.theme.text,
-        TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Center
     })
     
     local UserTag = createTextLabel(Userpad, {
         Name = "UserTag",
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
-        Position = UDim2.new(0.245809972, 0, 0.583333313, 0),
-        Size = UDim2.new(0, 1, 0, 1),
+        Position = UDim2.new(0, 0, 0, 20),
+        Size = UDim2.new(0, 72, 0, 15),
         Font = Enum.Font.Gotham,
         Text = "#" .. tostring(math.random(1000, 9999)),
         TextColor3 = self.theme.textSecondary,
-        TextSize = 10,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextSize = 8,
+        TextXAlignment = Enum.TextXAlignment.Center
     })
     
-    local ServersHoldFrame = createFrame(TopFrameHolder, {
-        Name = "ServersHoldFrame",
-        BackgroundColor3 = self.theme.secondary,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0.106243297, 0, 1.01886797, 0),
-        Size = UDim2.new(0, 179, 0, 296)
-    })
-    
-    local ServersHold = createScrollingFrame(ServersHoldFrame, {
+    local ServersHold = createScrollingFrame(ServersHolder, {
         Name = "ServersHold",
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         Position = UDim2.new(0, 0, 0, 0),
-        Size = UDim2.new(0, 179, 0, 296),
+        Size = UDim2.new(0, 72, 0, 350),
         ScrollBarThickness = 4,
         CanvasSize = UDim2.new(0, 0, 0, 0)
     })
@@ -361,9 +366,11 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         Name = "ChannelHolder",
         BackgroundColor3 = self.theme.secondary,
         BorderSizePixel = 0,
-        Position = UDim2.new(0.262848735, 0, 0, 0),
-        Size = UDim2.new(0, 179, 0, 396)
+        Position = UDim2.new(0, 72, 0, 0),
+        Size = UDim2.new(0, 200, 0, 396)
     })
+    
+    createUICorner(ChannelHolder, {CornerRadius = UDim2.new(0, 8)})
     
     local ChannelHolderTitle = createTextLabel(ChannelHolder, {
         Name = "ChannelHolderTitle",
@@ -384,7 +391,7 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         Position = UDim2.new(0, 0, 0, 30),
-        Size = UDim2.new(0, 179, 0, 366),
+        Size = UDim2.new(0, 200, 0, 366),
         ScrollBarThickness = 4,
         CanvasSize = UDim2.new(0, 0, 0, 0)
     })
@@ -404,9 +411,11 @@ function DiscordStyleUILibrary:createWindow(title, size, position)
         Name = "ContentHolder",
         BackgroundColor3 = self.theme.tertiary,
         BorderSizePixel = 0,
-        Position = UDim2.new(0.441997081, 0, 0, 0),
-        Size = UDim2.new(0, 378, 0, 396)
+        Position = UDim2.new(0, 272, 0, 0),
+        Size = UDim2.new(0, 409, 0, 396)
     })
+    
+    createUICorner(ContentHolder, {CornerRadius = UDim.new(0, 8)})
     
     local ContentHolderTitle = createTextLabel(ContentHolder, {
         Name = "ContentHolderTitle",
@@ -486,32 +495,41 @@ function DiscordStyleUILibrary:createServer(window, name, icon)
         Name = name,
         BackgroundColor3 = self.theme.tertiary,
         BorderSizePixel = 0,
-        Size = UDim2.new(0, 47, 0, 47)
+        Size = UDim2.new(0, 48, 0, 48),
+        Position = UDim2.new(0, 12, 0, 10 + (#window.serversHolder:GetChildren() * 58))
     })
     
-    createUICorner(ServerFrame, {CornerRadius = UDim.new(0, 23.5)})
+    createUICorner(ServerFrame, {CornerRadius = UDim.new(0, 24)})
     
     local ServerIcon = createTextLabel(ServerFrame, {
         Name = "ServerIcon",
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 0, 0),
-        Size = UDim2.new(0, 47, 0, 47),
+        Size = UDim2.new(0, 48, 0, 48),
         Font = Enum.Font.GothamBold,
         Text = icon or string.sub(name, 1, 1):upper(),
         TextColor3 = self.theme.text,
-        TextSize = 16,
+        TextSize = 18,
         TextXAlignment = Enum.TextXAlignment.Center
     })
+    
+    ServerFrame.MouseEnter:Connect(function()
+        tween(ServerFrame, {BackgroundColor3 = self.theme.hover})
+    end)
+    
+    ServerFrame.MouseLeave:Connect(function()
+        tween(ServerFrame, {BackgroundColor3 = self.theme.tertiary})
+    end)
     
     ServerFrame.MouseButton1Click:Connect(function()
         -- Handle server selection
         for _, server in pairs(window.serversHolder:GetChildren()) do
-            if server:IsA("Frame") then
+            if server:IsA("Frame") and server.Name ~= "ServersHold" then
                 tween(server, {BackgroundColor3 = self.theme.tertiary})
             end
         end
-        tween(ServerFrame, {BackgroundColor3 = self.theme.accent})
+        tween(ServerFrame, {BackgroundColor3 = self.theme.selected})
     end)
     
     return ServerFrame
@@ -522,7 +540,8 @@ function DiscordStyleUILibrary:createChannel(window, name, callback)
         Name = name,
         BackgroundColor3 = self.theme.tertiary,
         BorderSizePixel = 0,
-        Size = UDim2.new(0, 161, 0, 30)
+        Size = UDim2.new(0, 180, 0, 28),
+        Position = UDim2.new(0, 10, 0, 5 + (#window.channelHolder:GetChildren() * 33))
     })
     
     createUICorner(ChannelFrame, {CornerRadius = UDim.new(0, 4)})
@@ -531,14 +550,22 @@ function DiscordStyleUILibrary:createChannel(window, name, callback)
         Name = "ChannelName",
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 5, 0, 0),
-        Size = UDim2.new(0, 151, 0, 30),
+        Position = UDim2.new(0, 10, 0, 0),
+        Size = UDim2.new(0, 160, 0, 28),
         Font = Enum.Font.Gotham,
         Text = "# " .. name,
         TextColor3 = self.theme.textSecondary,
-        TextSize = 12,
+        TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left
     })
+    
+    ChannelFrame.MouseEnter:Connect(function()
+        tween(ChannelFrame, {BackgroundColor3 = self.theme.hover})
+    end)
+    
+    ChannelFrame.MouseLeave:Connect(function()
+        tween(ChannelFrame, {BackgroundColor3 = self.theme.tertiary})
+    end)
     
     ChannelFrame.MouseButton1Click:Connect(function()
         if callback then
@@ -554,23 +581,32 @@ function DiscordStyleUILibrary:createButton(parent, text, callback)
         Name = "Button",
         BackgroundColor3 = self.theme.tertiary,
         BorderSizePixel = 0,
-        Size = UDim2.new(0, 358, 0, 30)
+        Size = UDim2.new(0, 380, 0, 32),
+        Position = UDim2.new(0, 10, 0, 5 + (#parent:GetChildren() * 37))
     })
     
-    createUICorner(ButtonFrame, {CornerRadius = UDim.new(0, 4)})
+    createUICorner(ButtonFrame, {CornerRadius = UDim.new(0, 6)})
     
     local ButtonText = createTextLabel(ButtonFrame, {
         Name = "ButtonText",
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 5, 0, 0),
-        Size = UDim2.new(0, 348, 0, 30),
-        Font = Enum.Font.Gotham,
+        Position = UDim2.new(0, 15, 0, 0),
+        Size = UDim2.new(0, 350, 0, 32),
+        Font = Enum.Font.GothamBold,
         Text = text,
         TextColor3 = self.theme.text,
-        TextSize = 12,
+        TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left
     })
+    
+    ButtonFrame.MouseEnter:Connect(function()
+        tween(ButtonFrame, {BackgroundColor3 = self.theme.hover})
+    end)
+    
+    ButtonFrame.MouseLeave:Connect(function()
+        tween(ButtonFrame, {BackgroundColor3 = self.theme.tertiary})
+    end)
     
     ButtonFrame.MouseButton1Click:Connect(function()
         if callback then
