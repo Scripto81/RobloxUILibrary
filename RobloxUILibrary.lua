@@ -34,10 +34,13 @@ local Config = {
     EnablePerformanceMode = false,
     MaxNotifications = 5,
     NotificationDuration = 5,
-    EnableAutoClose = true
+    EnableAutoClose = true,
+    -- Sound error tracking
+    SoundErrorCount = 0,
+    MaxSoundErrors = 5
 }
 
--- Sound effects
+-- Sound effects with fallbacks
 local Sounds = {
     Click = "rbxasset://sounds/click.wav",
     Hover = "rbxasset://sounds/hover.wav",
@@ -45,6 +48,16 @@ local Sounds = {
     Success = "rbxasset://sounds/electronicpingshort.wav",
     Error = "rbxasset://sounds/error.wav",
     Warning = "rbxasset://sounds/electronicpingshort.wav"
+}
+
+-- Alternative sound IDs that might work better in some environments
+local AlternativeSounds = {
+    Click = "rbxassetid://604236371",
+    Hover = "rbxassetid://604236371",
+    Notification = "rbxassetid://604236371",
+    Success = "rbxassetid://604236371",
+    Error = "rbxassetid://604236371",
+    Warning = "rbxassetid://604236371"
 }
 
 -- Advanced utility functions
@@ -105,12 +118,54 @@ end
 -- Utility functions
 local function PlaySound(soundName)
     if Config.EnableSounds then
-        local sound = Instance.new("Sound")
-        sound.SoundId = Sounds[soundName] or Sounds.Click
-        sound.Volume = 0.3
-        sound.Parent = SoundService
-        sound:Play()
-        game:GetService("Debris"):AddItem(sound, 1)
+        local soundIds = {Sounds[soundName] or Sounds.Click, AlternativeSounds[soundName] or AlternativeSounds.Click}
+        
+        for i, soundId in ipairs(soundIds) do
+            local success, result = pcall(function()
+                local sound = Instance.new("Sound")
+                sound.SoundId = soundId
+                sound.Volume = 0.3
+                sound.Parent = SoundService
+                
+                -- Try to play the sound, but don't error if it fails
+                local playSuccess = pcall(function()
+                    sound:Play()
+                end)
+                
+                if not playSuccess then
+                    -- If sound fails to play, just destroy it silently
+                    sound:Destroy()
+                    Config.SoundErrorCount = Config.SoundErrorCount + 1
+                    
+                    -- Disable sounds if too many errors occur
+                    if Config.SoundErrorCount >= Config.MaxSoundErrors then
+                        Config.EnableSounds = false
+                        print("AYX Discord UI: Sounds disabled due to repeated loading failures")
+                        return
+                    end
+                else
+                    game:GetService("Debris"):AddItem(sound, 1)
+                    -- Reset error count on successful play
+                    Config.SoundErrorCount = 0
+                    return -- Success, exit the loop
+                end
+            end)
+            
+            -- If sound creation fails, try the next sound ID
+            if not success then
+                Config.SoundErrorCount = Config.SoundErrorCount + 1
+                
+                -- Disable sounds if too many errors occur
+                if Config.SoundErrorCount >= Config.MaxSoundErrors then
+                    Config.EnableSounds = false
+                    print("AYX Discord UI: Sounds disabled due to repeated loading failures")
+                    return
+                end
+            else
+                -- If we got here, the sound was created successfully
+                break
+            end
+        end
     end
 end
 
