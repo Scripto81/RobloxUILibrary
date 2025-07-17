@@ -23,15 +23,84 @@ local Config = {
     EnableBlur = false,
     SaveSettings = true,
     AutoSave = true,
-    Notifications = true
+    Notifications = true,
+    -- New advanced features
+    EnableRainbowMode = false,
+    EnableParticles = false,
+    EnableSmoothScrolling = true,
+    EnableTooltips = true,
+    EnableKeyboardShortcuts = true,
+    EnableMouseEffects = true,
+    EnablePerformanceMode = false,
+    MaxNotifications = 5,
+    NotificationDuration = 5,
+    EnableAutoClose = true
 }
 
 -- Sound effects
 local Sounds = {
     Click = "rbxasset://sounds/click.wav",
     Hover = "rbxasset://sounds/hover.wav",
-    Notification = "rbxasset://sounds/notification.wav"
+    Notification = "rbxasset://sounds/notification.wav",
+    Success = "rbxasset://sounds/electronicpingshort.wav",
+    Error = "rbxasset://sounds/error.wav",
+    Warning = "rbxasset://sounds/electronicpingshort.wav"
 }
+
+-- Advanced utility functions
+local function CreateRainbowColor()
+    local hue = tick() % 1
+    return Color3.fromHSV(hue, 1, 1)
+end
+
+local function CreateParticleEffect(parent)
+    if Config.EnableParticles then
+        local particle = Instance.new("Part")
+        particle.Shape = Enum.PartType.Ball
+        particle.Size = Vector3.new(0.1, 0.1, 0.1)
+        particle.Material = Enum.Material.Neon
+        particle.BrickColor = BrickColor.new(Config.AccentColor)
+        particle.Anchored = true
+        particle.CanCollide = false
+        particle.Parent = workspace
+        
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = Vector3.new(math.random(-10, 10), math.random(5, 15), math.random(-10, 10))
+        bodyVelocity.Parent = particle
+        
+        game:GetService("Debris"):AddItem(particle, 2)
+    end
+end
+
+local function CreateTooltip(text, parent)
+    if Config.EnableTooltips then
+        local tooltip = Instance.new("TextLabel")
+        tooltip.Text = text
+        tooltip.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        tooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
+        tooltip.Size = UDim2.new(0, 200, 0, 30)
+        tooltip.Position = UDim2.new(0, 0, -1.2, 0)
+        tooltip.Parent = parent
+        tooltip.ZIndex = 1000
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 5)
+        corner.Parent = tooltip
+        
+        return tooltip
+    end
+end
+
+local function CreateMouseTrail()
+    if Config.EnableMouseEffects then
+        local trail = Instance.new("Trail")
+        trail.Color = ColorSequence.new(Config.AccentColor)
+        trail.Transparency = NumberSequence.new(0, 1)
+        trail.Lifetime = 0.5
+        trail.Parent = game.Players.LocalPlayer.Character.HumanoidRootPart
+        game:GetService("Debris"):AddItem(trail, 1)
+    end
+end
 
 -- Utility functions
 local function PlaySound(soundName)
@@ -62,12 +131,62 @@ local function CreateGlow(parent, color)
     end
 end
 
-local function CreateBlur()
-    if Config.EnableBlur then
+-- Improved Blur Management
+local function SetBlur(enabled)
+    local lighting = game:GetService("Lighting")
+    -- Remove all previous blur effects created by this library
+    for _, v in ipairs(lighting:GetChildren()) do
+        if v:IsA("BlurEffect") and v.Name == "AYXDiscordUIBlur" then
+            v:Destroy()
+        end
+    end
+    if enabled then
         local blur = Instance.new("BlurEffect")
+        blur.Name = "AYXDiscordUIBlur"
         blur.Size = 10
-        blur.Parent = game:GetService("Lighting")
-        return blur
+        blur.Parent = lighting
+    end
+end
+
+-- Patch ToggleBlur to use SetBlur
+function AYXDiscordUILibrary:ToggleBlur(enabled)
+    Config.EnableBlur = enabled
+    SetBlur(enabled)
+end
+
+-- Full UI Color Customization
+function AYXDiscordUILibrary:SetColor(which, color)
+    if Config[which] ~= nil and typeof(color) == "Color3" then
+        Config[which] = color
+    end
+end
+
+function AYXDiscordUILibrary:SetThemeColors(tbl)
+    for k, v in pairs(tbl) do
+        if Config[k] ~= nil and typeof(v) == "Color3" then
+            Config[k] = v
+        end
+    end
+end
+
+function AYXDiscordUILibrary:SaveTheme(name)
+    if typeof(name) ~= "string" then return end
+    local theme = {
+        AccentColor = Config.AccentColor,
+        BackgroundColor = Config.BackgroundColor,
+        TextColor = Config.TextColor,
+        SecondaryColor = Config.SecondaryColor
+    }
+    writefile("ayxdiscordlib_theme_"..name..".txt", HttpService:JSONEncode(theme))
+end
+
+function AYXDiscordUILibrary:LoadTheme(name)
+    if typeof(name) ~= "string" then return end
+    local success, data = pcall(function()
+        return HttpService:JSONDecode(readfile("ayxdiscordlib_theme_"..name..".txt"))
+    end)
+    if success and typeof(data) == "table" then
+        self:SetThemeColors(data)
     end
 end
 
@@ -80,8 +199,24 @@ pcall(function()
 	userinfo = HttpService:JSONDecode(readfile("discordlibinfo.txt"));
 end)
 
-pfp = userinfo["pfp"] or "https://www.roblox.com/headshot-thumbnail/image?userId=".. game.Players.LocalPlayer.UserId .."&width=420&height=420&format=png"
-user =  userinfo["user"] or game.Players.LocalPlayer.Name
+-- Safe profile picture loading
+local function GetSafeProfilePicture()
+	local success, result = pcall(function()
+		return "https://www.roblox.com/headshot-thumbnail/image?userId=".. game.Players.LocalPlayer.UserId .."&width=420&height=420&format=png"
+	end)
+	return success and result or "rbxassetid://0"
+end
+
+-- Safe user info loading
+local function GetSafeUserInfo()
+	local success, result = pcall(function()
+		return game.Players.LocalPlayer.Name
+	end)
+	return success and result or "User"
+end
+
+pfp = userinfo["pfp"] or GetSafeProfilePicture()
+user = userinfo["user"] or GetSafeUserInfo()
 tag = userinfo["tag"] or tostring(math.random(1000,9999))
 
 local function SaveInfo()
@@ -147,10 +282,19 @@ local function MakeDraggable(topbarobject, object)
 	)
 end
 
-local Discord = Instance.new("ScreenGui")
-Discord.Name = "Discord"
-Discord.Parent = game.CoreGui
-Discord.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- Safe initialization
+local function SafeInit()
+	local success, result = pcall(function()
+		local Discord = Instance.new("ScreenGui")
+		Discord.Name = "Discord"
+		Discord.Parent = game.CoreGui
+		Discord.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		return Discord
+	end)
+	return success and result or Instance.new("ScreenGui")
+end
+
+local Discord = SafeInit()
 
 function AYXDiscordUILibrary:Window(text)
 	local currentservertoggled = ""
@@ -1342,6 +1486,7 @@ function AYXDiscordUILibrary:Window(text)
 		TextBoxFrame1.Parent = TextBoxFrame
 		TextBoxFrame1.AnchorPoint = Vector2.new(0.5, 0.5)
 		TextBoxFrame1.BackgroundColor3 = Color3.fromRGB(48, 51, 57)
+		TextBoxFrame1.ClipsDescendants = true
 		TextBoxFrame1.Position = UDim2.new(0.5, 0, 0.5, 0)
 		TextBoxFrame1.Size = UDim2.new(0, 317, 0, 36)
 
@@ -1728,8 +1873,11 @@ function AYXDiscordUILibrary:Window(text)
 		end)
 	end
 	
+	-- Notification management
+	local ActiveNotifications = {}
+	
 	-- Enhanced notification with types
-	function AYXDiscordUILibrary:Notify(titletext, desctext, btntext, notifType)
+	function AYXDiscordUILibrary:Notify(titletext, desctext, btntext, notifType, duration)
 		notifType = notifType or "Info"
 		local colors = {
 			Success = Color3.fromRGB(67, 181, 129),
@@ -3526,15 +3674,7 @@ end
 	
 	function AYXDiscordUILibrary:ToggleBlur(enabled)
 		Config.EnableBlur = enabled
-		if enabled then
-			CreateBlur()
-		else
-			local lighting = game:GetService("Lighting")
-			local blur = lighting:FindFirstChild("BlurEffect")
-			if blur then
-				blur:Destroy()
-			end
-		end
+		SetBlur(enabled)
 	end
 	
 	function AYXDiscordUILibrary:GetConfig()
