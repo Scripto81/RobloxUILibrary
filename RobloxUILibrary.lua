@@ -1,5 +1,5 @@
-local AdvancedRobloxUILibrary = {}
-AdvancedRobloxUILibrary.__index = AdvancedRobloxUILibrary
+local RayfieldStyleUILibrary = {}
+RayfieldStyleUILibrary.__index = RayfieldStyleUILibrary
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -13,7 +13,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 local function createScreenGui()
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "AdvancedRobloxUILibrary"
+    screenGui.Name = "RayfieldStyleUILibrary"
     screenGui.Parent = CoreGui
     return screenGui
 end
@@ -108,15 +108,6 @@ local function createUISizeConstraint(parent, properties)
     return uiSizeConstraint
 end
 
-local function createUIAspectRatioConstraint(parent, properties)
-    local uiAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
-    for key, value in pairs(properties) do
-        uiAspectRatioConstraint[key] = value
-    end
-    uiAspectRatioConstraint.Parent = parent
-    return uiAspectRatioConstraint
-end
-
 local function tween(instance, properties, duration, easingStyle, easingDirection)
     local tweenInfo = TweenInfo.new(duration or 0.3, easingStyle or Enum.EasingStyle.Quad, easingDirection or Enum.EasingDirection.Out)
     local tween = TweenService:Create(instance, tweenInfo, properties)
@@ -124,32 +115,18 @@ local function tween(instance, properties, duration, easingStyle, easingDirectio
     return tween
 end
 
-local function createShadow(parent)
-    local shadow = createFrame(parent, {
-        Size = UDim2.new(1, 0, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundTransparency = 1,
-        ZIndex = -1
-    })
-    
-    createUICorner(shadow, {CornerRadius = UDim.new(0, 8)})
-    createUIStroke(shadow, {Color = Color3.fromRGB(0, 0, 0), Thickness = 0, Transparency = 0.5})
-    
-    return shadow
-end
-
-function AdvancedRobloxUILibrary.new()
-    local self = setmetatable({}, AdvancedRobloxUILibrary)
+function RayfieldStyleUILibrary.new()
+    local self = setmetatable({}, RayfieldStyleUILibrary)
     self.screenGui = createScreenGui()
     self.components = {}
     self.windows = {}
     self.theme = {
-        primary = Color3.fromRGB(45, 45, 55),
+        primary = Color3.fromRGB(25, 25, 35),
         secondary = Color3.fromRGB(35, 35, 45),
         accent = Color3.fromRGB(100, 150, 255),
         text = Color3.fromRGB(255, 255, 255),
         textSecondary = Color3.fromRGB(200, 200, 200),
-        border = Color3.fromRGB(60, 60, 70),
+        border = Color3.fromRGB(50, 50, 60),
         success = Color3.fromRGB(100, 200, 100),
         warning = Color3.fromRGB(255, 200, 100),
         error = Color3.fromRGB(255, 100, 100)
@@ -157,31 +134,30 @@ function AdvancedRobloxUILibrary.new()
     return self
 end
 
-function AdvancedRobloxUILibrary:createWindow(title, size, position)
+function RayfieldStyleUILibrary:createWindow(title, size, position)
     local window = createFrame(self.screenGui, {
-        Size = size or UDim2.new(0, 400, 0, 500),
-        Position = position or UDim2.new(0.5, -200, 0.5, -250),
+        Size = size or UDim2.new(0, 450, 0, 550),
+        Position = position or UDim2.new(0.5, -225, 0.5, -275),
         BackgroundColor3 = self.theme.primary,
         BorderSizePixel = 0,
         Active = true,
         Draggable = true
     })
     
-    createUICorner(window, {CornerRadius = UDim.new(0, 12)})
+    createUICorner(window, {CornerRadius = UDim.new(0, 10)})
     createUIStroke(window, {Color = self.theme.border, Thickness = 1})
-    createShadow(window)
     
     local titleBar = createFrame(window, {
-        Size = UDim2.new(1, 0, 0, 40),
+        Size = UDim2.new(1, 0, 0, 35),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = self.theme.secondary,
         BorderSizePixel = 0
     })
     
-    createUICorner(titleBar, {CornerRadius = UDim.new(0, 12)})
+    createUICorner(titleBar, {CornerRadius = UDim.new(0, 10)})
     
     local titleLabel = createTextLabel(titleBar, {
-        Size = UDim2.new(1, -60, 1, 0),
+        Size = UDim2.new(1, -70, 1, 0),
         Position = UDim2.new(0, 15, 0, 0),
         BackgroundTransparency = 1,
         Text = title or "Window",
@@ -212,8 +188,8 @@ function AdvancedRobloxUILibrary:createWindow(title, size, position)
     createUICorner(minimizeButton, {CornerRadius = UDim.new(0, 6)})
     
     local contentFrame = createFrame(window, {
-        Size = UDim2.new(1, 0, 1, -40),
-        Position = UDim2.new(0, 0, 0, 40),
+        Size = UDim2.new(1, 0, 1, -35),
+        Position = UDim2.new(0, 0, 0, 35),
         BackgroundTransparency = 1
     })
     
@@ -233,10 +209,10 @@ function AdvancedRobloxUILibrary:createWindow(title, size, position)
     minimizeButton.MouseButton1Click:Connect(function()
         isMinimized = not isMinimized
         if isMinimized then
-            tween(window, {Size = UDim2.new(0, 400, 0, 40)})
+            tween(window, {Size = UDim2.new(0, 450, 0, 35)})
             contentFrame.Visible = false
         else
-            tween(window, {Size = size or UDim2.new(0, 400, 0, 500)})
+            tween(window, {Size = size or UDim2.new(0, 450, 0, 550)})
             contentFrame.Visible = true
         end
     end)
@@ -255,14 +231,14 @@ function AdvancedRobloxUILibrary:createWindow(title, size, position)
     return windowObj
 end
 
-function AdvancedRobloxUILibrary:createTabSystem(parent, tabs)
+function RayfieldStyleUILibrary:createTabSystem(parent, tabs)
     local tabSystem = createFrame(parent, {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1
     })
     
     local tabButtons = createFrame(tabSystem, {
-        Size = UDim2.new(1, 0, 0, 35),
+        Size = UDim2.new(1, 0, 0, 40),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = self.theme.secondary,
         BorderSizePixel = 0
@@ -271,8 +247,8 @@ function AdvancedRobloxUILibrary:createTabSystem(parent, tabs)
     createUICorner(tabButtons, {CornerRadius = UDim.new(0, 8)})
     
     local tabContent = createFrame(tabSystem, {
-        Size = UDim2.new(1, 0, 1, -45),
-        Position = UDim2.new(0, 0, 0, 45),
+        Size = UDim2.new(1, 0, 1, -50),
+        Position = UDim2.new(0, 0, 0, 50),
         BackgroundTransparency = 1
     })
     
@@ -280,7 +256,7 @@ function AdvancedRobloxUILibrary:createTabSystem(parent, tabs)
     local activeTab = nil
     
     for i, tabName in pairs(tabs) do
-        local tabButton = createFrame(tabButtons, {
+        local tabButton = createImageButton(tabButtons, {
             Size = UDim2.new(1/#tabs, -5, 1, -5),
             Position = UDim2.new((i-1)/#tabs, 0, 0, 0),
             BackgroundColor3 = self.theme.primary,
@@ -342,7 +318,7 @@ function AdvancedRobloxUILibrary:createTabSystem(parent, tabs)
     }
 end
 
-function AdvancedRobloxUILibrary:createSection(parent, title, size)
+function RayfieldStyleUILibrary:createSection(parent, title, size)
     local section = createFrame(parent, {
         Size = size or UDim2.new(1, 0, 0, 0),
         BackgroundColor3 = self.theme.secondary,
@@ -370,8 +346,8 @@ function AdvancedRobloxUILibrary:createSection(parent, title, size)
     })
     
     createUIPadding(sectionContent, {
-        PaddingTop = UDim.new(0, 5),
-        PaddingBottom = UDim.new(0, 5)
+        PaddingTop = UDim2.new(0, 5),
+        PaddingBottom = UDim2.new(0, 5)
     })
     
     return {
@@ -381,7 +357,7 @@ function AdvancedRobloxUILibrary:createSection(parent, title, size)
     }
 end
 
-function AdvancedRobloxUILibrary:createButton(parent, text, size, callback, style)
+function RayfieldStyleUILibrary:createButton(parent, text, size, callback, style)
     style = style or "primary"
     
     local buttonColors = {
@@ -392,7 +368,7 @@ function AdvancedRobloxUILibrary:createButton(parent, text, size, callback, styl
         error = {bg = self.theme.error, hover = Color3.fromRGB(255, 120, 120)}
     }
     
-    local button = createFrame(parent, {
+    local button = createImageButton(parent, {
         Size = size or UDim2.new(1, 0, 0, 35),
         BackgroundColor3 = buttonColors[style].bg,
         BorderSizePixel = 0
@@ -434,7 +410,7 @@ function AdvancedRobloxUILibrary:createButton(parent, text, size, callback, styl
     return button
 end
 
-function AdvancedRobloxUILibrary:createTextBox(parent, placeholder, size, callback)
+function RayfieldStyleUILibrary:createTextBox(parent, placeholder, size, callback)
     local textBox = createTextBox(parent, {
         Size = size or UDim2.new(1, 0, 0, 35),
         BackgroundColor3 = self.theme.primary,
@@ -465,7 +441,7 @@ function AdvancedRobloxUILibrary:createTextBox(parent, placeholder, size, callba
     return textBox
 end
 
-function AdvancedRobloxUILibrary:createSlider(parent, min, max, default, callback, label)
+function RayfieldStyleUILibrary:createSlider(parent, min, max, default, callback, label)
     local sliderFrame = createFrame(parent, {
         Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 1
@@ -570,13 +546,13 @@ function AdvancedRobloxUILibrary:createSlider(parent, min, max, default, callbac
     }
 end
 
-function AdvancedRobloxUILibrary:createToggle(parent, text, default, callback)
+function RayfieldStyleUILibrary:createToggle(parent, text, default, callback)
     local toggleFrame = createFrame(parent, {
         Size = UDim2.new(1, 0, 0, 30),
         BackgroundTransparency = 1
     })
     
-    local toggleButton = createFrame(toggleFrame, {
+    local toggleButton = createImageButton(toggleFrame, {
         Size = UDim2.new(0, 45, 0, 25),
         Position = UDim2.new(1, -50, 0.5, -12.5),
         BackgroundColor3 = self.theme.primary,
@@ -638,7 +614,7 @@ function AdvancedRobloxUILibrary:createToggle(parent, text, default, callback)
     }
 end
 
-function AdvancedRobloxUILibrary:createDropdown(parent, options, default, callback)
+function RayfieldStyleUILibrary:createDropdown(parent, options, default, callback)
     local dropdownFrame = createFrame(parent, {
         Size = UDim2.new(1, 0, 0, 35),
         BackgroundColor3 = self.theme.primary,
@@ -705,7 +681,7 @@ function AdvancedRobloxUILibrary:createDropdown(parent, options, default, callba
     end
     
     for i, option in pairs(options) do
-        local optionButton = createFrame(dropdownList, {
+        local optionButton = createImageButton(dropdownList, {
             Size = UDim2.new(1, -10, 0, 30),
             Position = UDim2.new(0, 5, 0, (i-1) * 30 + 5),
             BackgroundColor3 = self.theme.primary,
@@ -754,7 +730,7 @@ function AdvancedRobloxUILibrary:createDropdown(parent, options, default, callba
     }
 end
 
-function AdvancedRobloxUILibrary:createNotification(title, message, duration, type)
+function RayfieldStyleUILibrary:createNotification(title, message, duration, type)
     type = type or "info"
     
     local notificationColors = {
@@ -773,7 +749,6 @@ function AdvancedRobloxUILibrary:createNotification(title, message, duration, ty
     
     createUICorner(notification, {CornerRadius = UDim.new(0, 12)})
     createUIStroke(notification, {Color = notificationColors[type].border, Thickness = 2})
-    createShadow(notification)
     
     local titleLabel = createTextLabel(notification, {
         Size = UDim2.new(1, -20, 0, 25),
@@ -798,7 +773,7 @@ function AdvancedRobloxUILibrary:createNotification(title, message, duration, ty
         TextWrapped = true
     })
     
-    local closeButton = createTextLabel(notification, {
+    local closeButton = createImageButton(notification, {
         Size = UDim2.new(0, 25, 0, 25),
         Position = UDim2.new(1, -30, 0, 10),
         BackgroundTransparency = 1,
@@ -822,10 +797,10 @@ function AdvancedRobloxUILibrary:createNotification(title, message, duration, ty
     return notification
 end
 
-function AdvancedRobloxUILibrary:destroy()
+function RayfieldStyleUILibrary:destroy()
     if self.screenGui then
         self.screenGui:Destroy()
     end
 end
 
-return AdvancedRobloxUILibrary 
+return RayfieldStyleUILibrary 
