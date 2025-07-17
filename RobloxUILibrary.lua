@@ -3698,7 +3698,7 @@ function AYXDiscordUILibrary:Window(text)
 	
 	-- Add Notify function to ServerHold
 	ServerHold.Notify = function(titletext, desctext, btntext, notifType, duration)
-		return AYXDiscordUILibrary:Notify(titletext, desctext, btntext, notifType, duration)
+		return SafeNotify(nil, titletext, desctext, btntext, notifType, duration)
 	end
 	
 	return ServerHold
@@ -3721,6 +3721,8 @@ end
 	
 	function AYXDiscordUILibrary:SetAccentColor(color)
 		Config.AccentColor = color
+		-- Apply the new accent color immediately
+		AYXDiscordUILibrary:ApplyThemeToUI()
 	end
 	
 	function AYXDiscordUILibrary:SetAnimationSpeed(speed)
@@ -3780,6 +3782,8 @@ end
 				Config[k] = v
 			end
 		end
+		-- Apply the new theme colors immediately
+		AYXDiscordUILibrary:ApplyThemeToUI()
 	end
 	
 	function AYXDiscordUILibrary:SaveTheme(name)
@@ -3898,9 +3902,91 @@ end
 			-- Keep current colors for custom theme
 		end
 		Config.Theme = theme
+		
+		-- Apply theme to existing UI elements
+		AYXDiscordUILibrary:ApplyThemeToUI()
+	end
+	
+	-- Function to apply current theme to all UI elements
+	function AYXDiscordUILibrary:ApplyThemeToUI()
+		-- Find the main Discord UI
+		local discordUI = game:GetService("CoreGui"):FindFirstChild("Discord")
+		if not discordUI then 
+			print("AYX Discord UI: Could not find Discord UI")
+			return 
+		end
+		
+		local mainFrame = discordUI:FindFirstChild("MainFrame")
+		if not mainFrame then 
+			print("AYX Discord UI: Could not find MainFrame")
+			return 
+		end
+		
+		-- Apply background color to main frame
+		mainFrame.BackgroundColor3 = Config.BackgroundColor
+		
+		-- Apply colors to top frame
+		local topFrame = mainFrame:FindFirstChild("TopFrame")
+		if topFrame then
+			topFrame.BackgroundColor3 = Config.BackgroundColor
+		end
+		
+		-- Apply colors to servers holder
+		local serversHolder = mainFrame:FindFirstChild("ServersHoldFrame")
+		if serversHolder then
+			serversHolder.BackgroundColor3 = Config.BackgroundColor
+		end
+		
+		-- Apply colors to user panel
+		local userpad = mainFrame:FindFirstChild("Userpad")
+		if userpad then
+			userpad.BackgroundColor3 = Config.SecondaryColor
+		end
+		
+		-- Apply colors to all buttons (more specific targeting)
+		for _, button in pairs(mainFrame:GetDescendants()) do
+			if button:IsA("TextButton") then
+				-- Skip close/minimize buttons
+				if button.Name:find("Close") or button.Name:find("Minimize") then
+					-- Keep these as they are
+				elseif button.Name:find("Btn") or button.Name:find("Button") then
+					-- Apply accent color to action buttons
+					button.BackgroundColor3 = Config.AccentColor
+				end
+			end
+		end
+		
+		-- Apply text colors (more specific targeting)
+		for _, label in pairs(mainFrame:GetDescendants()) do
+			if label:IsA("TextLabel") then
+				-- Skip icon labels and special labels
+				if not label.Name:find("Icon") and 
+				   not label.Name:find("Image") and
+				   not label.Name:find("Circle") then
+					label.TextColor3 = Config.TextColor
+				end
+			end
+		end
+		
+		print("AYX Discord UI: Theme applied successfully")
 	end
 	
 	-- Enhanced notification function for Window objects
 	-- This will be added to each Window object when created
+	
+	-- Prevent empty popups by ensuring notifications have content
+	local function SafeNotify(window, title, desc, button, notifType, duration)
+		if not title or title == "" then
+			title = "Notification"
+		end
+		if not desc or desc == "" then
+			desc = "No description provided"
+		end
+		if not button or button == "" then
+			button = "OK"
+		end
+		
+		return AYXDiscordUILibrary:Notify(title, desc, button, notifType, duration)
+	end
 	
 	return AYXDiscordUILibrary
